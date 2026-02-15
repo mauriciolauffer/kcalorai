@@ -6,16 +6,19 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepare": "ts-patch install"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.4.2",
     "hono": "^4.6.0",
-    "zod": "^3.22.3"
+    "typia": "^11.0.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241018.0",
-    "typescript": "^5.5.3",
+    "@ryoppippi/unplugin-typia": "^2.6.5",
+    "esbuild": "^0.27.3",
+    "ts-patch": "^3.3.0",
+    "typescript": "~5.7.2",
     "vitest": "^2.1.0",
     "wrangler": "^3.80.0"
   },

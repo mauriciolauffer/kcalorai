@@ -1,14 +1,17 @@
-import { z } from 'zod';
+import typia from 'typia';
 
-export const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters long')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-});
+export interface SignupRequest {
+  /**
+   * @format email
+   */
+  email: string;
 
-export type SignupRequest = z.infer<typeof signupSchema>;
+  /**
+   * @minLength 8
+   * @pattern ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$
+   */
+  password: string;
+}
 
 export interface AuthResponse {
   user: {
