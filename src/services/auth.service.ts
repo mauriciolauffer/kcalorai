@@ -1,6 +1,7 @@
 import { sign } from "hono/jwt";
 import { UserRepository } from "../repositories/user.repository";
 import { SignupRequest, AuthResponse } from "../types/auth";
+import { ConflictError } from "../types/errors";
 
 export class AuthService {
   constructor(
@@ -11,7 +12,7 @@ export class AuthService {
   async signup(data: SignupRequest): Promise<AuthResponse> {
     const existingUser = await this.userRepository.findByEmail(data.email);
     if (existingUser) {
-      throw new Error("Email already in use");
+      throw new ConflictError("Email already in use");
     }
 
     const userId = crypto.randomUUID();

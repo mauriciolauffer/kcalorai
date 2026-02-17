@@ -5,10 +5,26 @@ import { SignupRequest } from "../types/auth";
 import { AuthService } from "../services/auth.service";
 import { UserRepository } from "../repositories/user.repository";
 import { Env } from "../types";
+import { AppError } from "../types/errors";
 
 const validateSignup = typia.createValidate<SignupRequest>();
 
-const auth = new Hono<{ Bindings: Env }>().post(
+const auth = new Hono<{ Bindings: Env }>();
+
+auth.onError((err, c) => {
+  if (err instanceof AppError) {
+    return c.json(
+      {
+        error: err.message,
+        details: err.details,
+      },
+      err.statusCode as any,
+    );
+  }
+  return c.json({ error: "Internal Server Error" }, 500);
+});
+
+auth.post(
   "/signup",
   typiaValidator("json", validateSignup, (result, c) => {
     if (!result.success) {
@@ -26,16 +42,9 @@ const auth = new Hono<{ Bindings: Env }>().post(
     const userRepository = new UserRepository(c.env.DB);
     const authService = new AuthService(userRepository, c.env.JWT_SECRET);
 
-    try {
       const response = await authService.signup(data);
       return c.json(response, 201);
-    } catch (error: any) {
-      if (error.message === "Email already in use") {
-        return c.json({ error: error.message }, 409);
-      }
-      return c.json({ error: error.message || "Internal Server Error" }, 500);
-    }
-  },
+    },
 );
 
 export default auth;
