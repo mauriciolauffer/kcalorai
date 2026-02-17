@@ -10,6 +10,7 @@
     "prepare": "ts-patch install"
   },
   "dependencies": {
+    "@hono/typia-validator": "^0.1.2",
     "hono": "^4.6.0",
     "typia": "^11.0.3"
   },
