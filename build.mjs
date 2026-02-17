@@ -1,14 +1,14 @@
-import esbuild from 'esbuild';
-import Typia from '@ryoppippi/unplugin-typia/esbuild';
+import { build } from 'rolldown';
+import Typia from '@ryoppippi/unplugin-typia/rolldown';
 
-await esbuild.build({
-  entryPoints: ['src/index.ts'],
-  bundle: true,
-  outfile: 'dist/index.js',
-  format: 'esm',
-  target: 'esnext',
-  minify: true,
-  sourcemap: true,
+await build({
+  input: 'src/index.ts',
+  output: {
+    file: 'dist/index.js',
+    format: 'esm',
+    sourcemap: true,
+    minify: true,
+  },
   plugins: [Typia()],
   external: ['__STATIC_CONTENT_MANIFEST'],
 });
