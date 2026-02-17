@@ -1,17 +1,17 @@
-import { sign } from 'hono/jwt';
-import { UserRepository } from '../repositories/user.repository';
-import { SignupRequest, AuthResponse } from '../types/auth';
+import { sign } from "hono/jwt";
+import { UserRepository } from "../repositories/user.repository";
+import { SignupRequest, AuthResponse } from "../types/auth";
 
 export class AuthService {
   constructor(
     private userRepository: UserRepository,
-    private jwtSecret: string
+    private jwtSecret: string,
   ) {}
 
   async signup(data: SignupRequest): Promise<AuthResponse> {
     const existingUser = await this.userRepository.findByEmail(data.email);
     if (existingUser) {
-      throw new Error('Email already in use');
+      throw new Error("Email already in use");
     }
 
     const userId = crypto.randomUUID();
@@ -23,11 +23,14 @@ export class AuthService {
       password_hash: passwordHash,
     });
 
-    const token = await sign({
-      sub: user.id,
-      email: user.email,
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) // 7 days
-    }, this.jwtSecret);
+    const token = await sign(
+      {
+        sub: user.id,
+        email: user.email,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+      },
+      this.jwtSecret,
+    );
 
     return {
       user: {
@@ -42,29 +45,29 @@ export class AuthService {
     const encoder = new TextEncoder();
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const keyMaterial = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       encoder.encode(password),
-      'PBKDF2',
+      "PBKDF2",
       false,
-      ['deriveBits', 'deriveKey']
+      ["deriveBits", "deriveKey"],
     );
     const key = await crypto.subtle.deriveBits(
       {
-        name: 'PBKDF2',
+        name: "PBKDF2",
         salt: salt,
         iterations: 100000,
-        hash: 'SHA-256'
+        hash: "SHA-256",
       },
       keyMaterial,
-      256
+      256,
     );
 
     const hashHex = Array.from(new Uint8Array(key))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     const saltHex = Array.from(salt)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     return `${saltHex}:${hashHex}`;
   }

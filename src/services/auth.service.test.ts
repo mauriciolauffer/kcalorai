@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuthService } from './auth.service';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AuthService } from "./auth.service";
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let userRepository: any;
   let authService: AuthService;
-  const JWT_SECRET = 'test-secret';
+  const JWT_SECRET = "test-secret";
 
   beforeEach(() => {
     userRepository = {
@@ -14,11 +14,11 @@ describe('AuthService', () => {
     authService = new AuthService(userRepository, JWT_SECRET);
   });
 
-  it('should signup a new user', async () => {
-    const data = { email: 'test@example.com', password: 'Password123' };
+  it("should signup a new user", async () => {
+    const data = { email: "test@example.com", password: "Password123" };
     userRepository.findByEmail.mockResolvedValue(null);
     userRepository.create.mockResolvedValue({
-      id: 'uuid',
+      id: "uuid",
       email: data.email,
     });
 
@@ -29,10 +29,10 @@ describe('AuthService', () => {
     expect(userRepository.create).toHaveBeenCalled();
   });
 
-  it('should throw error if email already in use', async () => {
-    const data = { email: 'test@example.com', password: 'Password123' };
-    userRepository.findByEmail.mockResolvedValue({ id: '1' });
+  it("should throw error if email already in use", async () => {
+    const data = { email: "test@example.com", password: "Password123" };
+    userRepository.findByEmail.mockResolvedValue({ id: "1" });
 
-    await expect(authService.signup(data)).rejects.toThrow('Email already in use');
+    await expect(authService.signup(data)).rejects.toThrow("Email already in use");
   });
 });

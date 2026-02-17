@@ -8,15 +8,15 @@ Comprehensive comparison of validation libraries for Hono: Zod, Valibot, Typia, 
 
 ## Quick Comparison
 
-| Feature | Zod | Valibot | Typia | ArkType |
-|---------|-----|---------|-------|---------|
-| **Bundle Size** | ~57KB | ~1-5KB | ~0KB | ~15KB |
-| **Performance** | Good | Excellent | Best | Excellent |
-| **Type Safety** | Excellent | Excellent | Best | Excellent |
-| **Ecosystem** | Largest | Growing | Small | Growing |
-| **Learning Curve** | Easy | Easy | Medium | Easy |
-| **Compilation** | Runtime | Runtime | AOT | Runtime |
-| **Tree Shaking** | Limited | Excellent | N/A | Good |
+| Feature            | Zod       | Valibot   | Typia  | ArkType   |
+| ------------------ | --------- | --------- | ------ | --------- |
+| **Bundle Size**    | ~57KB     | ~1-5KB    | ~0KB   | ~15KB     |
+| **Performance**    | Good      | Excellent | Best   | Excellent |
+| **Type Safety**    | Excellent | Excellent | Best   | Excellent |
+| **Ecosystem**      | Largest   | Growing   | Small  | Growing   |
+| **Learning Curve** | Easy      | Easy      | Medium | Easy      |
+| **Compilation**    | Runtime   | Runtime   | AOT    | Runtime   |
+| **Tree Shaking**   | Limited   | Excellent | N/A    | Good      |
 
 ---
 
@@ -25,6 +25,7 @@ Comprehensive comparison of validation libraries for Hono: Zod, Valibot, Typia, 
 **Install**: `npm install zod @hono/zod-validator`
 
 **Pros**:
+
 - ✅ Most popular (11M+ weekly downloads)
 - ✅ Extensive ecosystem and community
 - ✅ Excellent TypeScript support
@@ -32,30 +33,33 @@ Comprehensive comparison of validation libraries for Hono: Zod, Valibot, Typia, 
 - ✅ Great documentation
 
 **Cons**:
+
 - ❌ Larger bundle size (~57KB)
 - ❌ Slower performance vs alternatives
 - ❌ Limited tree-shaking
 
 **Best for**:
+
 - Production applications with complex validation needs
 - Projects prioritizing ecosystem and community support
 - Teams familiar with Zod
 
 **Example**:
+
 ```typescript
-import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
   age: z.number().int().min(18).optional(),
-})
+});
 
-app.post('/users', zValidator('json', schema), (c) => {
-  const data = c.req.valid('json')
-  return c.json({ success: true, data })
-})
+app.post("/users", zValidator("json", schema), (c) => {
+  const data = c.req.valid("json");
+  return c.json({ success: true, data });
+});
 ```
 
 ---
@@ -65,6 +69,7 @@ app.post('/users', zValidator('json', schema), (c) => {
 **Install**: `npm install valibot @hono/valibot-validator`
 
 **Pros**:
+
 - ✅ Tiny bundle size (1-5KB with tree-shaking)
 - ✅ Excellent performance
 - ✅ Modular design (import only what you need)
@@ -72,30 +77,33 @@ app.post('/users', zValidator('json', schema), (c) => {
 - ✅ Great TypeScript support
 
 **Cons**:
+
 - ❌ Smaller ecosystem vs Zod
 - ❌ Newer library (less battle-tested)
 - ❌ Fewer integrations
 
 **Best for**:
+
 - Applications prioritizing bundle size
 - Performance-critical applications
 - Projects that want Zod-like API with better performance
 
 **Example**:
+
 ```typescript
-import { vValidator } from '@hono/valibot-validator'
-import * as v from 'valibot'
+import { vValidator } from "@hono/valibot-validator";
+import * as v from "valibot";
 
 const schema = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
   email: v.pipe(v.string(), v.email()),
   age: v.optional(v.pipe(v.number(), v.integer(), v.minValue(18))),
-})
+});
 
-app.post('/users', vValidator('json', schema), (c) => {
-  const data = c.req.valid('json')
-  return c.json({ success: true, data })
-})
+app.post("/users", vValidator("json", schema), (c) => {
+  const data = c.req.valid("json");
+  return c.json({ success: true, data });
+});
 ```
 
 ---
@@ -105,6 +113,7 @@ app.post('/users', vValidator('json', schema), (c) => {
 **Install**: `npm install typia @hono/typia-validator`
 
 **Pros**:
+
 - ✅ **Fastest** validation (AOT compilation)
 - ✅ Zero runtime overhead
 - ✅ No bundle size impact
@@ -112,33 +121,36 @@ app.post('/users', vValidator('json', schema), (c) => {
 - ✅ Compile-time validation
 
 **Cons**:
+
 - ❌ Requires build step (TypeScript transformer)
 - ❌ More complex setup
 - ❌ Smaller community
 - ❌ Limited to TypeScript
 
 **Best for**:
+
 - Maximum performance requirements
 - Applications with strict bundle size constraints
 - Projects already using TypeScript transformers
 
 **Example**:
+
 ```typescript
-import { typiaValidator } from '@hono/typia-validator'
-import typia from 'typia'
+import { typiaValidator } from "@hono/typia-validator";
+import typia from "typia";
 
 interface User {
-  name: string
-  email: string
-  age?: number
+  name: string;
+  email: string;
+  age?: number;
 }
 
-const validate = typia.createValidate<User>()
+const validate = typia.createValidate<User>();
 
-app.post('/users', typiaValidator('json', validate), (c) => {
-  const data = c.req.valid('json')
-  return c.json({ success: true, data })
-})
+app.post("/users", typiaValidator("json", validate), (c) => {
+  const data = c.req.valid("json");
+  return c.json({ success: true, data });
+});
 ```
 
 ---
@@ -148,6 +160,7 @@ app.post('/users', typiaValidator('json', validate), (c) => {
 **Install**: `npm install arktype @hono/arktype-validator`
 
 **Pros**:
+
 - ✅ Excellent performance (1.5x faster than Zod)
 - ✅ Intuitive string-based syntax
 - ✅ Great error messages
@@ -155,30 +168,33 @@ app.post('/users', typiaValidator('json', validate), (c) => {
 - ✅ Small bundle size (~15KB)
 
 **Cons**:
+
 - ❌ Newer library
 - ❌ Smaller ecosystem
 - ❌ Different syntax (learning curve)
 
 **Best for**:
+
 - Developers who prefer string-based schemas
 - Performance-conscious projects
 - Projects that value developer experience
 
 **Example**:
+
 ```typescript
-import { arktypeValidator } from '@hono/arktype-validator'
-import { type } from 'arktype'
+import { arktypeValidator } from "@hono/arktype-validator";
+import { type } from "arktype";
 
 const schema = type({
-  name: 'string',
-  email: 'email',
-  'age?': 'number>=18',
-})
+  name: "string",
+  email: "email",
+  "age?": "number>=18",
+});
 
-app.post('/users', arktypeValidator('json', schema), (c) => {
-  const data = c.req.valid('json')
-  return c.json({ success: true, data })
-})
+app.post("/users", arktypeValidator("json", schema), (c) => {
+  const data = c.req.valid("json");
+  return c.json({ success: true, data });
+});
 ```
 
 ---
@@ -213,54 +229,58 @@ Zod:     ~57 KB
 
 ### Transformations
 
-| Library | Support | Example |
-|---------|---------|---------|
-| Zod | ✅ | `z.string().transform(Number)` |
-| Valibot | ✅ | `v.pipe(v.string(), v.transform(Number))` |
-| Typia | ✅ | Built into types |
-| ArkType | ✅ | Type inference |
+| Library | Support | Example                                   |
+| ------- | ------- | ----------------------------------------- |
+| Zod     | ✅      | `z.string().transform(Number)`            |
+| Valibot | ✅      | `v.pipe(v.string(), v.transform(Number))` |
+| Typia   | ✅      | Built into types                          |
+| ArkType | ✅      | Type inference                            |
 
 ### Refinements
 
-| Library | Support | Example |
-|---------|---------|---------|
-| Zod | ✅ | `z.string().refine((val) => val.length > 0)` |
-| Valibot | ✅ | `v.pipe(v.string(), v.check((val) => val.length > 0))` |
-| Typia | ✅ | Custom validators |
-| ArkType | ✅ | Narrow types |
+| Library | Support | Example                                                |
+| ------- | ------- | ------------------------------------------------------ |
+| Zod     | ✅      | `z.string().refine((val) => val.length > 0)`           |
+| Valibot | ✅      | `v.pipe(v.string(), v.check((val) => val.length > 0))` |
+| Typia   | ✅      | Custom validators                                      |
+| ArkType | ✅      | Narrow types                                           |
 
 ### Default Values
 
-| Library | Support | Example |
-|---------|---------|---------|
-| Zod | ✅ | `z.string().default('default')` |
-| Valibot | ✅ | `v.optional(v.string(), 'default')` |
-| Typia | ⚠️ | Limited |
-| ArkType | ✅ | Type defaults |
+| Library | Support | Example                             |
+| ------- | ------- | ----------------------------------- |
+| Zod     | ✅      | `z.string().default('default')`     |
+| Valibot | ✅      | `v.optional(v.string(), 'default')` |
+| Typia   | ⚠️      | Limited                             |
+| ArkType | ✅      | Type defaults                       |
 
 ---
 
 ## Recommendations
 
 ### Choose **Zod** if:
+
 - You want the largest ecosystem and community
 - You need extensive documentation and examples
 - Bundle size is not a primary concern
 - You want battle-tested reliability
 
 ### Choose **Valibot** if:
+
 - Bundle size is critical
 - You want Zod-like API with better performance
 - You're building a modern application with tree-shaking
 - You want modular imports
 
 ### Choose **Typia** if:
+
 - Performance is absolutely critical
 - You can afford a more complex build setup
 - Zero runtime overhead is required
 - You're already using TypeScript transformers
 
 ### Choose **ArkType** if:
+
 - You prefer string-based schema syntax
 - You want excellent error messages
 - Performance is important but not critical
@@ -277,13 +297,13 @@ Zod:     ~57 KB
 const schema = z.object({
   name: z.string().min(1),
   age: z.number().optional(),
-})
+});
 
 // Valibot
 const schema = v.object({
   name: v.pipe(v.string(), v.minLength(1)),
   age: v.optional(v.number()),
-})
+});
 ```
 
 ### Zod → ArkType
@@ -293,13 +313,13 @@ const schema = v.object({
 const schema = z.object({
   name: z.string().min(1),
   age: z.number().optional(),
-})
+});
 
 // ArkType
 const schema = type({
-  name: 'string>0',
-  'age?': 'number',
-})
+  name: "string>0",
+  "age?": "number",
+});
 ```
 
 ---

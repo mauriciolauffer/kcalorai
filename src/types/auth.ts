@@ -1,5 +1,3 @@
-import typia from 'typia';
-
 export interface SignupRequest {
   /**
    * @format email
