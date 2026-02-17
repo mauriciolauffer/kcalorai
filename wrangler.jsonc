@@ -5,9 +5,6 @@
   "build": {
     "command": "node build.mjs",
   },
-  "vars": {
-    "JWT_SECRET": "your-secret-key-change-me",
-  },
   "d1_databases": [
     {
       "binding": "DB",

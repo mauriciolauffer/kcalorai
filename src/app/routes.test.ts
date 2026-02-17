@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { testClient } from "hono/testing";
 import { app } from "./index";
 
 describe("Auth Routes Integration", () => {
@@ -13,25 +14,19 @@ describe("Auth Routes Integration", () => {
     JWT_SECRET: "test-secret",
   };
 
+  const client = testClient(app, env);
+
   it("should return 201 on successful signup", async () => {
     mockDB.first
       .mockResolvedValueOnce(null) // findByEmail
       .mockResolvedValueOnce({ id: "uuid", email: "test@example.com" }); // create
 
-    const res = await app.request(
-      "/auth/signup",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "test@example.com",
-          password: "Password123",
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const res = await client.auth.signup.$post({
+      json: {
+        email: "test@example.com",
+        password: "Password123",
       },
-      env,
-    );
+    });
 
     expect(res.status).toBe(201);
     const body: any = await res.json();
@@ -40,20 +35,12 @@ describe("Auth Routes Integration", () => {
   });
 
   it("should return 400 on invalid input", async () => {
-    const res = await app.request(
-      "/auth/signup",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "invalid-email",
-          password: "weak",
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const res = await client.auth.signup.$post({
+      json: {
+        email: "invalid-email",
+        password: "weak",
       },
-      env,
-    );
+    });
 
     expect(res.status).toBe(400);
   });
@@ -61,20 +48,12 @@ describe("Auth Routes Integration", () => {
   it("should return 409 if email already exists", async () => {
     mockDB.first.mockResolvedValueOnce({ id: "1", email: "test@example.com" });
 
-    const res = await app.request(
-      "/auth/signup",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "test@example.com",
-          password: "Password123",
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const res = await client.auth.signup.$post({
+      json: {
+        email: "test@example.com",
+        password: "Password123",
       },
-      env,
-    );
+    });
 
     expect(res.status).toBe(409);
     const body: any = await res.json();
