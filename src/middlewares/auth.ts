@@ -1,6 +1,7 @@
 import { Context, Next, MiddlewareHandler } from "hono";
 import { jwt } from "hono/jwt";
 import { Env } from "../types";
+import { UnauthorizedError } from "../types/errors";
 
 export const authMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const middleware = jwt({
@@ -13,7 +14,7 @@ export const authMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, ne
 export const getUserId = (c: Context): string => {
   const payload = c.get("jwtPayload");
   if (!payload || !payload.sub) {
-    throw new Error("User ID not found in JWT payload");
+    throw new UnauthorizedError("User ID not found in JWT payload");
   }
   return payload.sub as string;
 };

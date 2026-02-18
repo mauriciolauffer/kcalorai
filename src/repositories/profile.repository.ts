@@ -18,64 +18,38 @@ export class ProfileRepository {
   }
 
   async upsertProfile(profile: Partial<UserProfile> & { user_id: string }): Promise<UserProfile> {
-    const existing = await this.getProfile(profile.user_id);
+    const result = await this.db
+      .prepare(
+        `INSERT INTO user_profiles (user_id, age, height_cm, weight_kg, gender, activity_level, goal, profile_completed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           age = COALESCE(excluded.age, user_profiles.age),
+           height_cm = COALESCE(excluded.height_cm, user_profiles.height_cm),
+           weight_kg = COALESCE(excluded.weight_kg, user_profiles.weight_kg),
+           gender = COALESCE(excluded.gender, user_profiles.gender),
+           activity_level = COALESCE(excluded.activity_level, user_profiles.activity_level),
+           goal = COALESCE(excluded.goal, user_profiles.goal),
+           profile_completed = COALESCE(excluded.profile_completed, user_profiles.profile_completed),
+           updated_at = datetime('now')
+         RETURNING *`,
+      )
+      .bind(
+        profile.user_id,
+        profile.age ?? null,
+        profile.height_cm ?? null,
+        profile.weight_kg ?? null,
+        profile.gender ?? null,
+        profile.activity_level ?? null,
+        profile.goal ?? null,
+        profile.profile_completed === undefined ? null : (profile.profile_completed ? 1 : 0),
+      )
+      .first<any>();
 
-    if (existing) {
-      const result = await this.db
-        .prepare(
-          `UPDATE user_profiles
-           SET age = ?, height_cm = ?, weight_kg = ?, gender = ?, activity_level = ?, goal = ?, profile_completed = ?, updated_at = datetime('now')
-           WHERE user_id = ?
-           RETURNING *`,
-        )
-        .bind(
-          profile.age ?? existing.age,
-          profile.height_cm ?? existing.height_cm,
-          profile.weight_kg ?? existing.weight_kg,
-          profile.gender ?? existing.gender,
-          profile.activity_level ?? existing.activity_level,
-          profile.goal ?? existing.goal,
-          profile.profile_completed !== undefined
-            ? profile.profile_completed
-              ? 1
-              : 0
-            : existing.profile_completed
-              ? 1
-              : 0,
-          profile.user_id,
-        )
-        .first<any>();
-
-      if (!result) {
-        throw new Error("Failed to update profile");
-      }
-
-      return { ...result, profile_completed: result.profile_completed === 1 };
-    } else {
-      const result = await this.db
-        .prepare(
-          `INSERT INTO user_profiles (user_id, age, height_cm, weight_kg, gender, activity_level, goal, profile_completed)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-           RETURNING *`,
-        )
-        .bind(
-          profile.user_id,
-          profile.age ?? null,
-          profile.height_cm ?? null,
-          profile.weight_kg ?? null,
-          profile.gender ?? null,
-          profile.activity_level ?? null,
-          profile.goal ?? null,
-          profile.profile_completed ? 1 : 0,
-        )
-        .first<any>();
-
-      if (!result) {
-        throw new Error("Failed to insert profile");
-      }
-
-      return { ...result, profile_completed: result.profile_completed === 1 };
+    if (!result) {
+      throw new Error("Failed to upsert profile");
     }
+
+    return { ...result, profile_completed: result.profile_completed === 1 };
   }
 
   async createGoal(goal: Omit<UserGoal, "id" | "created_at">): Promise<UserGoal> {
