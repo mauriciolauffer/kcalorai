@@ -102,4 +102,38 @@ describe("Profile Routes", () => {
     expect(data.profile.profile_completed).toBe(true);
     expect(data.latest_goal.daily_calories).toBeDefined();
   });
+
+  it("GET /profile should succeed with valid token", async () => {
+    const mockDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+              user_id: userId,
+              profile_completed: 0,
+            });
+          }),
+        }),
+      }),
+    };
+
+    const res = await app.request(
+      "/profile",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      {
+        DB: mockDb as any,
+        JWT_SECRET,
+      },
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.profile).toBeDefined();
+    expect(data.profile.user_id).toBe(userId);
+  });
 });
