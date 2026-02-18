@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { createFactory } from "hono/factory";
 import typia from "typia";
 import { typiaValidator } from "@hono/typia-validator";
 import { SignupRequest } from "../types/auth";
@@ -9,31 +8,27 @@ import { Env } from "../types";
 
 const validateSignup = typia.createValidate<SignupRequest>();
 
-const factory = createFactory<{ Bindings: Env }>();
-
 const auth = new Hono<{ Bindings: Env }>().post(
   "/signup",
-  ...factory.createHandlers(
-    typiaValidator("json", validateSignup, (result, c) => {
-      if (!result.success) {
-        return c.json(
-          {
-            error: "Validation failed",
-            details: result.errors,
-          },
-          400,
-        );
-      }
-    }),
-    async (c) => {
-      const data = c.req.valid("json");
-      const userRepository = new UserRepository(c.env.DB);
-      const authService = new AuthService(userRepository, c.env.JWT_SECRET);
+  typiaValidator("json", validateSignup, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        {
+          error: "Validation failed",
+          details: result.errors,
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const data = c.req.valid("json");
+    const userRepository = new UserRepository(c.env.DB);
+    const authService = new AuthService(userRepository, c.env.JWT_SECRET);
 
-      const response = await authService.signup(data);
-      return c.json(response, 201);
-    },
-  ),
+    const response = await authService.signup(data);
+    return c.json(response, 201);
+  },
 );
 
 export default auth;
