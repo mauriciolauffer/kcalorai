@@ -11,19 +11,6 @@ const validateSignup = typia.createValidate<SignupRequest>();
 
 const auth = new Hono<{ Bindings: Env }>();
 
-auth.onError((err, c) => {
-  if (err instanceof AppError) {
-    return c.json(
-      {
-        error: err.message,
-        details: err.details,
-      },
-      err.statusCode as any,
-    );
-  }
-  return c.json({ error: "Internal Server Error" }, 500);
-});
-
 auth.post(
   "/signup",
   typiaValidator("json", validateSignup, (result, c) => {
