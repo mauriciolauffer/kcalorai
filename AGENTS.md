@@ -14,10 +14,10 @@ This file is authoritative.
 
 The backend is designed to:
 
-* Run entirely on Cloudflare infrastructure
-* Be stateless, fast, and deterministic
-* Be easy to reason about for automated agents
-* Favor clarity and explicitness over abstraction
+- Run entirely on Cloudflare infrastructure
+- Be stateless, fast, and deterministic
+- Be easy to reason about for automated agents
+- Favor clarity and explicitness over abstraction
 
 ---
 
@@ -25,11 +25,11 @@ The backend is designed to:
 
 Agents must assume the following execution constraints:
 
-* Runtime: **Cloudflare Workers**
-* Language: **TypeScript**
-* Execution model: event‑driven, request/response
-* No long‑lived state in memory
-* No access to Node.js APIs
+- Runtime: **Cloudflare Workers**
+- Language: **TypeScript**
+- Execution model: event‑driven, request/response
+- No long‑lived state in memory
+- No access to Node.js APIs
 
 All backend code executes at the edge.
 
@@ -39,16 +39,16 @@ All backend code executes at the edge.
 
 ### Infrastructure
 
-* Cloudflare Workers
-* Cloudflare D1 (SQLite)
+- Cloudflare Workers
+- Cloudflare D1 (SQLite)
 
 ### Application Layer
 
-* Hono (HTTP routing and middleware)
+- Hono (HTTP routing and middleware)
 
 ### Testing
 
-* Vitest
+- Vitest
 
 No alternative frameworks, runtimes, or databases may be introduced without updating this file.
 
@@ -80,11 +80,11 @@ Agents must preserve this layering.
 
 When modifying this repository, agents must:
 
-* Keep route handlers thin
-* Keep business logic out of HTTP layers
-* Centralize persistence logic
-* Avoid hidden side effects
-* Prefer explicit data flow
+- Keep route handlers thin
+- Keep business logic out of HTTP layers
+- Centralize persistence logic
+- Avoid hidden side effects
+- Prefer explicit data flow
 
 Agents must not introduce cross‑layer dependencies.
 
@@ -117,16 +117,16 @@ The Hono Worker is the system boundary.
 
 ### Allowed in routes
 
-* Request parsing
-* Input validation
-* Calling services
-* Returning HTTP responses
+- Request parsing
+- Input validation
+- Calling services
+- Returning HTTP responses
 
 ### Forbidden in routes
 
-* Business rules
-* SQL queries
-* Direct database access
+- Business rules
+- SQL queries
+- Direct database access
 
 ---
 
@@ -136,9 +136,9 @@ Services define domain behavior.
 
 Agents must ensure that services:
 
-* Contain no HTTP concepts
-* Are framework‑agnostic
-* Can be tested in isolation
+- Contain no HTTP concepts
+- Are framework‑agnostic
+- Can be tested in isolation
 
 Services may coordinate multiple repositories.
 
@@ -150,9 +150,9 @@ D1 is the single source of truth.
 
 ### Constraints
 
-* All SQL lives in repositories
-* Repositories receive `D1Database` explicitly
-* No global database access
+- All SQL lives in repositories
+- Repositories receive `D1Database` explicitly
+- No global database access
 
 Repositories must expose intent‑revealing methods.
 
@@ -164,8 +164,8 @@ All Cloudflare bindings must be typed.
 
 ```ts
 export interface Env {
-  DB: D1Database
-  JWT_SECRET: string
+  DB: D1Database;
+  JWT_SECRET: string;
 }
 ```
 
@@ -179,9 +179,9 @@ Authentication is stateless.
 
 ### Rules
 
-* JWT only
-* Tokens passed via `Authorization` header
-* Verification handled by middleware
+- JWT only
+- Tokens passed via `Authorization` header
+- Verification handled by middleware
 
 No server‑side sessions are allowed.
 
@@ -193,9 +193,9 @@ Errors must be predictable and normalized.
 
 ### Rules
 
-* Throw explicit errors
-* Centralize error handling
-* Never leak stack traces in production
+- Throw explicit errors
+- Centralize error handling
+- Never leak stack traces in production
 
 ---
 
@@ -205,9 +205,9 @@ Vitest is mandatory.
 
 Agents must ensure:
 
-* Services are unit‑tested
-* Repositories are testable with mocked or local D1
-* Routes can be tested by importing the Hono app
+- Services are unit‑tested
+- Repositories are testable with mocked or local D1
+- Routes can be tested by importing the Hono app
 
 Tests must not rely on global state.
 
@@ -217,9 +217,9 @@ Tests must not rely on global state.
 
 Supported environments:
 
-* dev
-* staging
-* production
+- dev
+- staging
+- production
 
 Each environment must have isolated D1 databases and secrets.
 
@@ -231,9 +231,9 @@ Wrangler configuration is the source of truth for bindings.
 
 Future Cloudflare features (KV, Queues, Cron, R2) may be added only if:
 
-* Layering is preserved
-* Core request flow remains synchronous
-* This document is updated accordingly
+- Layering is preserved
+- Core request flow remains synchronous
+- This document is updated accordingly
 
 ---
 
@@ -249,4 +249,4 @@ Failure to do so is considered a defect.
 
 ---
 
-*End of AGENTS.md*
+_End of AGENTS.md_

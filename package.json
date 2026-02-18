@@ -6,14 +6,26 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "prepare": "ts-patch install"
   },
   "dependencies": {
-    "hono": "^4.6.0"
+    "@hono/typia-validator": "^0.1.2",
+    "hono": "^4.6.0",
+    "typia": "^11.0.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241018.0",
-    "typescript": "^5.5.3",
+    "@ryoppippi/unplugin-typia": "^2.6.5",
+    "oxfmt": "^0.33.0",
+    "oxlint": "^1.48.0",
+    "rolldown": "1.0.0-rc.4",
+    "ts-patch": "^3.3.0",
+    "typescript": "~5.7.2",
     "vitest": "^2.1.0",
     "wrangler": "^3.80.0"
   },
