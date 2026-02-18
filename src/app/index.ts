@@ -12,7 +12,7 @@ app.onError((err, c) => {
     return c.json(
       {
         error: err.message,
-        details: err.details,
+        ...(err.details ? { details: err.details } : {}),
       },
       err.statusCode as any,
     );

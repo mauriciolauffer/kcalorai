@@ -5,20 +5,15 @@ import { SignupRequest } from "../types/auth";
 import { AuthService } from "../services/auth.service";
 import { UserRepository } from "../repositories/user.repository";
 import { Env } from "../types";
+import { ValidationError } from "../types/errors";
 
 const validateSignup = typia.createValidate<SignupRequest>();
 
 const auth = new Hono<{ Bindings: Env }>().post(
   "/signup",
-  typiaValidator("json", validateSignup, (result, c) => {
+  typiaValidator("json", validateSignup, (result) => {
     if (!result.success) {
-      return c.json(
-        {
-          error: "Validation failed",
-          details: result.errors,
-        },
-        400,
-      );
+      throw new ValidationError("Validation failed", result.errors);
     }
   }),
   async (c) => {

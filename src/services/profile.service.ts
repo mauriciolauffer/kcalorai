@@ -48,12 +48,7 @@ export class ProfileService {
   private calculateDailyCalories(data: SetupProfileRequest): number {
     const { age, height_cm, weight_kg, gender, activity_level, goal } = data;
 
-    let bmr: number;
-    if (gender === "male") {
-      bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + 5;
-    } else {
-      bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age - 161;
-    }
+    const bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + (gender === "male" ? 5 : -161);
 
     const multipliers: Record<string, number> = {
       sedentary: 1.2,

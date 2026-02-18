@@ -6,6 +6,7 @@ import { SetupProfileRequest } from "../types/profile";
 import { ProfileRepository } from "../repositories/profile.repository";
 import { ProfileService } from "../services/profile.service";
 import { authMiddleware, getUserId } from "../middlewares/auth";
+import { ValidationError } from "../types/errors";
 
 const validateSetup = typia.createValidate<SetupProfileRequest>();
 
@@ -21,15 +22,9 @@ const profile = new Hono<{ Bindings: Env }>()
   })
   .post(
     "/setup",
-    typiaValidator("json", validateSetup, (result, c) => {
+    typiaValidator("json", validateSetup, (result) => {
       if (!result.success) {
-        return c.json(
-          {
-            error: "Validation failed",
-            details: result.errors,
-          },
-          400,
-        );
+        throw new ValidationError("Validation failed", result.errors);
       }
     }),
     async (c) => {
