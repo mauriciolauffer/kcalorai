@@ -1,7 +1,7 @@
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { defineWorkersProject } from "@cloudflare/vitest-pool-workers/config";
 import UnpluginTypia from "@ryoppippi/unplugin-typia/vite";
 
-export default defineWorkersConfig({
+export default defineWorkersProject({
   plugins: [UnpluginTypia()],
   test: {
     globals: true,
