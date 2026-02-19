@@ -15,10 +15,11 @@
   },
   "dependencies": {
     "@hono/typia-validator": "^0.1.2",
-    "hono": "^4.6.0",
+    "hono": "^4.11.10",
     "typia": "^11.0.3"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.13",
     "@cloudflare/workers-types": "^4.20241018.0",
     "@ryoppippi/unplugin-typia": "^2.6.5",
     "oxfmt": "^0.33.0",

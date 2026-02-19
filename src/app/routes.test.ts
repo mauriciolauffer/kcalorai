@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { testClient } from "hono/testing";
+import { env } from "cloudflare:test";
 import { app } from "./index";
+import { Env } from "../types";
 
 describe("Auth Routes Integration", () => {
   const mockDB = {
@@ -9,12 +11,13 @@ describe("Auth Routes Integration", () => {
     first: vi.fn(),
   };
 
-  const env = {
+  const testEnv: Env = {
+    ...env,
     DB: mockDB as any,
     JWT_SECRET: "test-secret",
   };
 
-  const client = testClient(app, env);
+  const client = testClient(app, testEnv) as any;
 
   it("should return 201 on successful signup", async () => {
     mockDB.first
