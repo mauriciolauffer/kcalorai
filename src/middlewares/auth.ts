@@ -1,4 +1,4 @@
-import { Context, Next, MiddlewareHandler } from "hono";
+import { Context, MiddlewareHandler } from "hono";
 import { jwt } from "hono/jwt";
 import { Env } from "../types";
 import { UnauthorizedError } from "../types/errors";

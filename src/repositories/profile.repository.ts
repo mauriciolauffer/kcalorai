@@ -41,7 +41,7 @@ export class ProfileRepository {
         profile.gender ?? null,
         profile.activity_level ?? null,
         profile.goal ?? null,
-        profile.profile_completed === undefined ? null : (profile.profile_completed ? 1 : 0),
+        profile.profile_completed === undefined ? null : profile.profile_completed ? 1 : 0,
       )
       .first<any>();
 
