@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { env } from "cloudflare:test";
 import { app } from "../app";
 import { sign } from "hono/jwt";
 
@@ -22,7 +23,7 @@ describe("Profile Routes", () => {
       "/profile",
       {},
       {
-        DB: {} as any,
+        ...env,
         JWT_SECRET,
       },
     );
@@ -43,7 +44,7 @@ describe("Profile Routes", () => {
         }),
       },
       {
-        DB: {} as any,
+        ...env,
         JWT_SECRET,
       },
     );
@@ -92,6 +93,7 @@ describe("Profile Routes", () => {
         }),
       },
       {
+        ...env,
         DB: mockDb as any,
         JWT_SECRET,
       },
@@ -126,6 +128,7 @@ describe("Profile Routes", () => {
         },
       },
       {
+        ...env,
         DB: mockDb as any,
         JWT_SECRET,
       },

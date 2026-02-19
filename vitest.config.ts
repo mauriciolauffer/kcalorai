@@ -1,10 +1,14 @@
-import { defineConfig } from "vitest/config";
+import { defineWorkersProject } from "@cloudflare/vitest-pool-workers/config";
 import UnpluginTypia from "@ryoppippi/unplugin-typia/vite";
 
-export default defineConfig({
+export default defineWorkersProject({
   plugins: [UnpluginTypia()],
   test: {
     globals: true,
-    environment: "node",
+    poolOptions: {
+      workers: {
+        wrangler: { configPath: "./wrangler.jsonc" },
+      },
+    },
   },
 });
