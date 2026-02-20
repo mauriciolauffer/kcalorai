@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@hono/typia-validator": "^0.1.2",
-    "hono": "^4.6.0",
+    "hono": "^4.11.10",
     "typia": "^11.0.3"
   },
   "devDependencies": {
