@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { testClient } from "hono/testing";
 import { app } from "../app";
 import { sign } from "hono/jwt";
 
@@ -18,33 +19,29 @@ describe("Profile Routes", () => {
   });
 
   it("GET /profile should return 401 if unauthorized", async () => {
-    const res = await app.request(
-      "/profile",
-      {},
-      {
-        DB: {} as any,
-        JWT_SECRET,
-      },
-    );
+    const client = testClient(app, {
+      DB: {} as any,
+      JWT_SECRET,
+    });
+    const res = await client.profile.$get();
     expect(res.status).toBe(401);
   });
 
   it("POST /profile/setup should validate input", async () => {
-    const res = await app.request(
-      "/profile/setup",
+    const client = testClient(app, {
+      DB: {} as any,
+      JWT_SECRET,
+    });
+    const res = await client.profile.setup.$post(
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        json: {
           age: 0, // Invalid: @minimum 1
-        }),
+        } as any,
       },
       {
-        DB: {} as any,
-        JWT_SECRET,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
 
@@ -58,8 +55,6 @@ describe("Profile Routes", () => {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
           first: vi.fn().mockImplementation(() => {
-            // This mock returns whatever the caller expects for simplicity
-            // in this test we just want to see it reach the end
             return Promise.resolve({
               user_id: userId,
               profile_completed: 1,
@@ -74,26 +69,26 @@ describe("Profile Routes", () => {
       }),
     };
 
-    const res = await app.request(
-      "/profile/setup",
+    const client = testClient(app, {
+      DB: mockDb as any,
+      JWT_SECRET,
+    });
+
+    const res = await client.profile.setup.$post(
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        json: {
           age: 30,
           height_cm: 180,
           weight_kg: 80,
           gender: "male",
           activity_level: "moderately_active",
           goal: "maintain_weight",
-        }),
+        },
       },
       {
-        DB: mockDb as any,
-        JWT_SECRET,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
 
@@ -117,17 +112,17 @@ describe("Profile Routes", () => {
       }),
     };
 
-    const res = await app.request(
-      "/profile",
+    const client = testClient(app, {
+      DB: mockDb as any,
+      JWT_SECRET,
+    });
+
+    const res = await client.profile.$get(
+      {},
       {
-        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
-      {
-        DB: mockDb as any,
-        JWT_SECRET,
       },
     );
 
