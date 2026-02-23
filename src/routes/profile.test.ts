@@ -8,7 +8,19 @@ describe("Profile Routes", () => {
   const userId = "test-user-id";
   let token: string;
 
+  const mockDb = {
+    prepare: vi.fn().mockReturnThis(),
+    bind: vi.fn().mockReturnThis(),
+    first: vi.fn(),
+  };
+
+  const client = testClient(app, {
+    DB: mockDb as any,
+    JWT_SECRET,
+  });
+
   beforeEach(async () => {
+    vi.clearAllMocks();
     token = await sign(
       {
         sub: userId,
@@ -19,19 +31,11 @@ describe("Profile Routes", () => {
   });
 
   it("GET /profile should return 401 if unauthorized", async () => {
-    const client = testClient(app, {
-      DB: {} as any,
-      JWT_SECRET,
-    });
     const res = await client.profile.$get();
     expect(res.status).toBe(401);
   });
 
   it("POST /profile/setup should validate input", async () => {
-    const client = testClient(app, {
-      DB: {} as any,
-      JWT_SECRET,
-    });
     const res = await client.profile.setup.$post(
       {
         json: {
@@ -51,28 +55,19 @@ describe("Profile Routes", () => {
   });
 
   it("POST /profile/setup should succeed with valid input", async () => {
-    const mockDb = {
-      prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({
-          first: vi.fn().mockImplementation(() => {
-            return Promise.resolve({
-              user_id: userId,
-              profile_completed: 1,
-              daily_calories: 2500,
-              protein_g: 150,
-              fat_g: 70,
-              carbs_g: 300,
-              effective_from: "2023-01-01",
-            });
-          }),
-        }),
-      }),
-    };
-
-    const client = testClient(app, {
-      DB: mockDb as any,
-      JWT_SECRET,
-    });
+    mockDb.first
+      .mockResolvedValueOnce({
+        user_id: userId,
+        profile_completed: 1,
+      })
+      .mockResolvedValueOnce({
+        user_id: userId,
+        daily_calories: 2500,
+        protein_g: 150,
+        fat_g: 70,
+        carbs_g: 300,
+        effective_from: "2023-01-01",
+      });
 
     const res = await client.profile.setup.$post(
       {
@@ -99,22 +94,9 @@ describe("Profile Routes", () => {
   });
 
   it("GET /profile should succeed with valid token", async () => {
-    const mockDb = {
-      prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({
-          first: vi.fn().mockImplementation(() => {
-            return Promise.resolve({
-              user_id: userId,
-              profile_completed: 0,
-            });
-          }),
-        }),
-      }),
-    };
-
-    const client = testClient(app, {
-      DB: mockDb as any,
-      JWT_SECRET,
+    mockDb.first.mockResolvedValueOnce({
+      user_id: userId,
+      profile_completed: 0,
     });
 
     const res = await client.profile.$get(
