@@ -29,14 +29,14 @@ describe("Profile Routes", () => {
 
   it("POST /profile/setup should validate input", async () => {
     const client = testClient(app, {
-      DB: {} as any,
+      DB: {} as unknown as D1Database,
       JWT_SECRET,
     });
     const res = await client.profile.setup.$post(
       {
         json: {
           age: 0, // Invalid: @minimum 1
-        } as any,
+        } as unknown as any,
       },
       {
         headers: {
@@ -46,8 +46,12 @@ describe("Profile Routes", () => {
     );
 
     expect(res.status).toBe(400);
-    const data = (await res.json()) as any;
-    expect(data.error).toBe("Validation failed");
+    const data = await res.json();
+    if ("error" in data) {
+      expect(data.error).toBe("Validation failed");
+    } else {
+      throw new Error("Expected error response");
+    }
   });
 
   it("POST /profile/setup should succeed with valid input", async () => {
@@ -95,9 +99,13 @@ describe("Profile Routes", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = (await res.json()) as any;
-    expect(data.profile.profile_completed).toBe(true);
-    expect(data.latest_goal.daily_calories).toBeDefined();
+    const data = await res.json();
+    if ("profile" in data && "latest_goal" in data && typeof data.profile === "object" && data.profile !== null && "profile_completed" in data.profile) {
+      expect(data.profile.profile_completed).toBe(true);
+      expect(data.latest_goal).toBeDefined();
+    } else {
+      throw new Error("Invalid response body");
+    }
   });
 
   it("GET /profile should succeed with valid token", async () => {
@@ -129,8 +137,11 @@ describe("Profile Routes", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = (await res.json()) as any;
-    expect(data.profile).toBeDefined();
-    expect(data.profile.user_id).toBe(userId);
+    const data = await res.json();
+    if ("profile" in data && typeof data.profile === "object" && data.profile !== null && "user_id" in data.profile) {
+      expect(data.profile.user_id).toBe(userId);
+    } else {
+      throw new Error("Invalid response body");
+    }
   });
 });

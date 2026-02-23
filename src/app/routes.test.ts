@@ -29,9 +29,12 @@ describe("Auth Routes Integration", () => {
     });
 
     expect(res.status).toBe(201);
-    const body: any = await res.json();
-    expect(body).toHaveProperty("token");
-    expect(body.user.email).toBe("test@example.com");
+    const body = await res.json();
+    if ("token" in body && "user" in body && typeof body.user === "object" && body.user !== null && "email" in body.user) {
+      expect(body.user.email).toBe("test@example.com");
+    } else {
+      throw new Error("Invalid response body");
+    }
   });
 
   it("should return 400 on invalid input", async () => {
@@ -56,7 +59,11 @@ describe("Auth Routes Integration", () => {
     });
 
     expect(res.status).toBe(409);
-    const body: any = await res.json();
-    expect(body.error).toBe("Email already in use");
+    const body = await res.json();
+    if ("error" in body) {
+      expect(body.error).toBe("Email already in use");
+    } else {
+      throw new Error("Expected error response");
+    }
   });
 });
