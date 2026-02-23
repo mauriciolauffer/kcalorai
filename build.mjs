@@ -1,5 +1,5 @@
 import { build } from "rolldown";
-import Typia from "@ryoppippi/unplugin-typia/rolldown";
+import typescript from "@rollup/plugin-typescript";
 
 await build({
   input: "src/index.ts",
@@ -9,6 +9,13 @@ await build({
     sourcemap: true,
     minify: true,
   },
-  plugins: [Typia()],
+  plugins: [
+    typescript({
+      tsconfig: "./tsconfig.json",
+      compilerOptions: {
+        module: "ESNext",
+      },
+    }),
+  ],
   external: ["__STATIC_CONTENT_MANIFEST"],
 });

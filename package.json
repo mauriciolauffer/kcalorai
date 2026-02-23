@@ -20,12 +20,13 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260302.0",
-    "@ryoppippi/unplugin-typia": "^2.6.5",
+    "@rollup/plugin-typescript": "^12.3.0",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
     "rolldown": "1.0.0-rc.5",
     "ts-patch": "^3.3.0",
     "typescript": "~5.9.3",
+    "unplugin-typia": "0.1.0-beta.0",
     "vitest": "^4.0.18",
     "wrangler": "^4.67.0"
   },
