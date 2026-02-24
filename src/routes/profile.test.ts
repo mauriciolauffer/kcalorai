@@ -100,7 +100,13 @@ describe("Profile Routes", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    if ("profile" in data && "latest_goal" in data && typeof data.profile === "object" && data.profile !== null && "profile_completed" in data.profile) {
+    if (
+      "profile" in data &&
+      "latest_goal" in data &&
+      typeof data.profile === "object" &&
+      data.profile !== null &&
+      "profile_completed" in data.profile
+    ) {
       expect(data.profile.profile_completed).toBe(true);
       expect(data.latest_goal).toBeDefined();
     } else {
@@ -138,7 +144,12 @@ describe("Profile Routes", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    if ("profile" in data && typeof data.profile === "object" && data.profile !== null && "user_id" in data.profile) {
+    if (
+      "profile" in data &&
+      typeof data.profile === "object" &&
+      data.profile !== null &&
+      "user_id" in data.profile
+    ) {
       expect(data.profile.user_id).toBe(userId);
     } else {
       throw new Error("Invalid response body");

@@ -30,7 +30,13 @@ describe("Auth Routes Integration", () => {
 
     expect(res.status).toBe(201);
     const body = await res.json();
-    if ("token" in body && "user" in body && typeof body.user === "object" && body.user !== null && "email" in body.user) {
+    if (
+      "token" in body &&
+      "user" in body &&
+      typeof body.user === "object" &&
+      body.user !== null &&
+      "email" in body.user
+    ) {
       expect(body.user.email).toBe("test@example.com");
     } else {
       throw new Error("Invalid response body");
