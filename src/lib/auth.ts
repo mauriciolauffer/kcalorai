@@ -1,14 +1,37 @@
 import { betterAuth } from "better-auth";
 import { Env } from "../types";
 
-export const getAuth = (env: Env) => {
+export const getAuth = (env: Env, executionCtx?: ExecutionContext) => {
   return betterAuth({
+    appName: "kcalorai",
     database: env.DB,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/auth",
+    trustedOrigins: [env.BETTER_AUTH_URL],
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: false, // Set to true when email service is ready
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        // TODO: Implement email sending
+        console.log(`Reset password email for ${user.email}: ${url}`);
+      },
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        // TODO: Implement email sending
+        console.log(`Verify email for ${user.email}: ${url}`);
+      },
+    },
+    advanced: {
+      backgroundTasks: {
+        handler: (promise) => {
+          if (executionCtx) {
+            executionCtx.waitUntil(promise);
+          }
+        },
+      },
     },
     user: {
       modelName: "users",

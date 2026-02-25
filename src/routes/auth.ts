@@ -5,7 +5,13 @@ import { getAuth } from "../lib/auth";
 const auth = new Hono<{ Bindings: Env }>();
 
 auth.on(["POST", "GET"], "/*", (c) => {
-  return getAuth(c.env).handler(c.req.raw);
+  let executionCtx;
+  try {
+    executionCtx = c.executionCtx;
+  } catch {
+    // ignore
+  }
+  return getAuth(c.env, executionCtx).handler(c.req.raw);
 });
 
 export default auth;

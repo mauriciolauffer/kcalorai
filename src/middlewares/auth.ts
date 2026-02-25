@@ -7,7 +7,13 @@ export const authMiddleware: MiddlewareHandler<{
   Bindings: Env;
   Variables: AuthVariables;
 }> = async (c, next) => {
-  const auth = getAuth(c.env);
+  let executionCtx;
+  try {
+    executionCtx = c.executionCtx;
+  } catch {
+    // Execution context might not be available in all environments (e.g. tests)
+  }
+  const auth = getAuth(c.env, executionCtx);
   const session = await auth.api.getSession({
     headers: c.req.raw.headers,
   });
