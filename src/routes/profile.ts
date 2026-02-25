@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import typia from "typia";
 import { typiaValidator } from "@hono/typia-validator";
-import { Env } from "../types";
+import { Env, AuthVariables } from "../types";
 import { SetupProfileRequest } from "../types/profile";
 import { ProfileRepository } from "../repositories/profile.repository";
 import { ProfileService } from "../services/profile.service";
@@ -10,7 +10,7 @@ import { ValidationError } from "../types/errors";
 
 const validateSetup = typia.createValidate<SetupProfileRequest>();
 
-const profile = new Hono<{ Bindings: Env }>()
+const profile = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
   .get("/", async (c) => {
     const userId = getUserId(c);

@@ -15,13 +15,13 @@ describe("UserRepository", () => {
   });
 
   it("should create a user", async () => {
-    const user = { id: "1", email: "test@example.com", password_hash: "hash" };
+    const user = { id: "1", name: "Test", email: "test@example.com", password_hash: "hash" };
     db.first.mockResolvedValue({ ...user, created_at: "now", updated_at: "now" });
 
     const result = await repository.create(user);
 
     expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO users"));
-    expect(db.bind).toHaveBeenCalledWith(user.id, user.email, user.password_hash);
+    expect(db.bind).toHaveBeenCalledWith(user.id, user.name, user.email, user.password_hash);
     expect(result.email).toBe(user.email);
   });
 

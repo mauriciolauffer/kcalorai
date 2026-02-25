@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { Env } from "../types";
+import { Env, AuthVariables } from "../types";
 import auth from "../routes/auth";
 import profile from "../routes/profile";
 import { AppError } from "../types/errors";
 
-const app = new Hono<{ Bindings: Env }>()
+const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .onError((err, c) => {
     if (err instanceof AppError) {
       return c.json(
