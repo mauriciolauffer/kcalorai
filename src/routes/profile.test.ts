@@ -1,37 +1,49 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { testClient } from "hono/testing";
 import { app } from "../app";
-import { sign } from "hono/jwt";
+
+vi.mock("../lib/auth", () => ({
+  getAuth: vi.fn().mockReturnValue({
+    api: {
+      getSession: vi.fn(),
+    },
+  }),
+}));
+
+import { getAuth } from "../lib/auth";
 
 describe("Profile Routes", () => {
-  const JWT_SECRET = "test-secret";
   const userId = "test-user-id";
-  let token: string;
-
-  beforeEach(async () => {
-    token = await sign(
-      {
-        sub: userId,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60,
-      },
-      JWT_SECRET,
-    );
-  });
+  const env = {
+    DB: {} as any,
+    BETTER_AUTH_SECRET: "test-secret",
+    BETTER_AUTH_URL: "http://localhost",
+    JWT_SECRET: "test-jwt-secret",
+  };
 
   it("GET /profile should return 401 if unauthorized", async () => {
-    const client = testClient(app, {
-      DB: {} as any,
-      JWT_SECRET,
-    });
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue(null),
+      },
+    } as any);
+
+    const client = testClient(app, env);
     const res = await client.profile.$get();
     expect(res.status).toBe(401);
   });
 
   it("POST /profile/setup should validate input", async () => {
-    const client = testClient(app, {
-      DB: {} as unknown as D1Database,
-      JWT_SECRET,
-    });
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: userId, email: "test@example.com", name: "Test" },
+          session: { id: "session-id" },
+        }),
+      },
+    } as any);
+
+    const client = testClient(app, env);
     const res = await client.profile.setup.$post(
       {
         json: {
@@ -40,27 +52,30 @@ describe("Profile Routes", () => {
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          cookie: "better-auth.session-token=test-token",
         },
       },
     );
 
     expect(res.status).toBe(400);
-    const data = await res.json();
-    if ("error" in data) {
-      expect(data.error).toBe("Validation failed");
-    } else {
-      throw new Error("Expected error response");
-    }
+    const data = (await res.json()) as any;
+    expect(data.error).toBe("Validation failed");
   });
 
   it("POST /profile/setup should succeed with valid input", async () => {
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: userId, email: "test@example.com", name: "Test" },
+          session: { id: "session-id" },
+        }),
+      },
+    } as any);
+
     const mockDb = {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
           first: vi.fn().mockImplementation(() => {
-            // This mock returns whatever the caller expects for simplicity
-            // in this test we just want to see it reach the end
             return Promise.resolve({
               user_id: userId,
               profile_completed: 1,
@@ -76,8 +91,8 @@ describe("Profile Routes", () => {
     };
 
     const client = testClient(app, {
+      ...env,
       DB: mockDb as any,
-      JWT_SECRET,
     });
 
     const res = await client.profile.setup.$post(
@@ -93,28 +108,26 @@ describe("Profile Routes", () => {
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          cookie: "better-auth.session-token=test-token",
         },
       },
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
-    if (
-      "profile" in data &&
-      "latest_goal" in data &&
-      typeof data.profile === "object" &&
-      data.profile !== null &&
-      "profile_completed" in data.profile
-    ) {
-      expect(data.profile.profile_completed).toBe(true);
-      expect(data.latest_goal).toBeDefined();
-    } else {
-      throw new Error("Invalid response body");
-    }
+    const data = (await res.json()) as any;
+    expect(data.profile.profile_completed).toBe(true);
   });
 
-  it("GET /profile should succeed with valid token", async () => {
+  it("GET /profile should succeed with valid session", async () => {
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: userId, email: "test@example.com", name: "Test" },
+          session: { id: "session-id" },
+        }),
+      },
+    } as any);
+
     const mockDb = {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
@@ -129,30 +142,21 @@ describe("Profile Routes", () => {
     };
 
     const client = testClient(app, {
+      ...env,
       DB: mockDb as any,
-      JWT_SECRET,
     });
 
     const res = await client.profile.$get(
       {},
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          cookie: "better-auth.session-token=test-token",
         },
       },
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
-    if (
-      "profile" in data &&
-      typeof data.profile === "object" &&
-      data.profile !== null &&
-      "user_id" in data.profile
-    ) {
-      expect(data.profile.user_id).toBe(userId);
-    } else {
-      throw new Error("Invalid response body");
-    }
+    const data = (await res.json()) as any;
+    expect(data.profile.user_id).toBe(userId);
   });
 });

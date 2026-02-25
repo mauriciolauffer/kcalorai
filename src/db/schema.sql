@@ -1,7 +1,10 @@
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  image TEXT,
+  password_hash TEXT, -- Deprecated, kept for migration
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -61,13 +64,40 @@ CREATE TABLE food_logs (
   FOREIGN KEY (food_id) REFERENCES foods(id)
 );
 
-CREATE TABLE auth_sessions (
+CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  token_hash TEXT NOT NULL,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  token TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE accounts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  account_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  access_token_expires_at TEXT,
+  refresh_token_expires_at TEXT,
+  scope TEXT,
+  id_token TEXT,
+  password TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE verifications (
+  id TEXT PRIMARY KEY,
+  identifier TEXT NOT NULL,
+  value TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 

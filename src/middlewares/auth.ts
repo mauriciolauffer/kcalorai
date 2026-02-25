@@ -1,20 +1,30 @@
 import { Context, MiddlewareHandler } from "hono";
-import { jwt } from "hono/jwt";
-import { Env } from "../types";
+import { Env, AuthVariables } from "../types";
 import { UnauthorizedError } from "../types/errors";
+import { getAuth } from "../lib/auth";
 
-export const authMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
-  const middleware = jwt({
-    secret: c.env.JWT_SECRET,
-    alg: "HS256",
+export const authMiddleware: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: AuthVariables;
+}> = async (c, next) => {
+  const auth = getAuth(c.env);
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
   });
-  return middleware(c, next);
+
+  if (!session) {
+    throw new UnauthorizedError("Unauthorized");
+  }
+
+  c.set("user", session.user);
+  c.set("session", session.session);
+  return next();
 };
 
 export const getUserId = (c: Context): string => {
-  const payload = c.get("jwtPayload");
-  if (!payload || !payload.sub) {
-    throw new UnauthorizedError("User ID not found in JWT payload");
+  const user = c.get("user");
+  if (!user || !user.id) {
+    throw new UnauthorizedError("User ID not found in session");
   }
-  return payload.sub as string;
+  return user.id;
 };
