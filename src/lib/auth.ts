@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { bearer } from "better-auth/plugins/bearer";
 import { Env } from "../types";
 
 export const getAuth = (env: Env, executionCtx?: ExecutionContext) => {
@@ -24,6 +25,7 @@ export const getAuth = (env: Env, executionCtx?: ExecutionContext) => {
         console.log(`Verify email for ${user.email}: ${url}`);
       },
     },
+    plugins: [bearer()],
     advanced: {
       backgroundTasks: {
         handler: (promise) => {
