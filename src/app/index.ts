@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { Env, AuthVariables } from "../types";
 import auth from "../routes/auth";
 import profile from "../routes/profile";
+import food from "../routes/food";
 import { AppError } from "../types/errors";
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
@@ -24,6 +25,7 @@ const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   })
   .route("/auth", auth)
   .route("/profile", profile)
+  .route("/food", food)
   .get("/health", (c) => {
     return c.json({ status: "ok" });
   })
