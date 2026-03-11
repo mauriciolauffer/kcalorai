@@ -1,75 +1,59 @@
 import { describe, it, expect, vi } from "vitest";
-import { testClient } from "hono/testing";
 import { app } from "./index";
 
+vi.mock("../lib/auth", () => ({
+  getAuth: vi.fn().mockReturnValue({
+    handler: vi.fn(),
+  }),
+}));
+
+import { getAuth } from "../lib/auth";
+
 describe("Auth Routes Integration", () => {
-  const mockDB = {
-    prepare: vi.fn().mockReturnThis(),
-    bind: vi.fn().mockReturnThis(),
-    first: vi.fn(),
-  };
-
   const env = {
-    DB: mockDB as any,
-    JWT_SECRET: "test-secret",
+    DB: {} as any,
+    BETTER_AUTH_SECRET: "test-secret",
+    BETTER_AUTH_URL: "http://localhost",
+    JWT_SECRET: "test-jwt-secret",
   };
 
-  const client = testClient(app, env);
+  it("should call better-auth handler", async () => {
+    const mockHandler = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    vi.mocked(getAuth).mockReturnValue({
+      handler: mockHandler,
+    } as any);
 
-  it("should return 201 on successful signup", async () => {
-    mockDB.first
-      .mockResolvedValueOnce(null) // findByEmail
-      .mockResolvedValueOnce({ id: "uuid", email: "test@example.com" }); // create
-
-    const res = await client.auth.signup.$post({
-      json: {
-        email: "test@example.com",
-        password: "Password123",
+    // Using app.request to avoid RPC issues with catch-all Better Auth handler
+    const res = await app.request(
+      "/auth/signup-email",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "test@example.com",
+          password: "Password123",
+          name: "Test User",
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+      env,
+    );
 
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    if (
-      "token" in body &&
-      "user" in body &&
-      typeof body.user === "object" &&
-      body.user !== null &&
-      "email" in body.user
-    ) {
-      expect(body.user.email).toBe("test@example.com");
-    } else {
-      throw new Error("Invalid response body");
-    }
+    expect(res.status).toBe(200);
+    expect(mockHandler).toHaveBeenCalled();
   });
 
-  it("should return 400 on invalid input", async () => {
-    const res = await client.auth.signup.$post({
-      json: {
-        email: "invalid-email",
-        password: "weak",
-      },
-    });
+  it("should return 404 for unknown auth routes if handler returns 404", async () => {
+    const mockHandler = vi.fn().mockResolvedValue(new Response("Not Found", { status: 404 }));
+    vi.mocked(getAuth).mockReturnValue({
+      handler: mockHandler,
+    } as any);
 
-    expect(res.status).toBe(400);
-  });
+    const res = await app.request("/auth/unknown", {}, env);
 
-  it("should return 409 if email already exists", async () => {
-    mockDB.first.mockResolvedValueOnce({ id: "1", email: "test@example.com" });
-
-    const res = await client.auth.signup.$post({
-      json: {
-        email: "test@example.com",
-        password: "Password123",
-      },
-    });
-
-    expect(res.status).toBe(409);
-    const body = await res.json();
-    if ("error" in body) {
-      expect(body.error).toBe("Email already in use");
-    } else {
-      throw new Error("Expected error response");
-    }
+    expect(res.status).toBe(404);
   });
 });

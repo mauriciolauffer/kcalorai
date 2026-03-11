@@ -16,19 +16,20 @@
   },
   "dependencies": {
     "@hono/typia-validator": "^0.1.2",
-    "hono": "^4.12.2",
+    "better-auth": "^1.5.4",
+    "hono": "^4.12.7",
     "typia": "^11.0.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260303.0",
+    "@cloudflare/workers-types": "^4.20260310.1",
     "@ryoppippi/unplugin-typia": "^2.6.5",
-    "oxfmt": "^0.35.0",
-    "oxlint": "^1.50.0",
-    "rolldown": "1.0.0-rc.5",
+    "oxfmt": "^0.38.0",
+    "oxlint": "^1.53.0",
+    "rolldown": "1.0.0-rc.8",
     "ts-patch": "^3.3.0",
     "typescript": "~5.9.3",
     "vitest": "^4.0.18",
-    "wrangler": "^4.68.0"
+    "wrangler": "^4.72.0"
   },
   "engines": {
     "node": ">=20",

@@ -1,4 +1,5 @@
 export interface SignupRequest {
+  name: string;
   /**
    * @format email
    */

@@ -5,8 +5,8 @@ export class UserRepository {
 
   async create(user: CreateUserDTO): Promise<User> {
     const result = await this.db
-      .prepare("INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?) RETURNING *")
-      .bind(user.id, user.email, user.password_hash)
+      .prepare("INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?) RETURNING *")
+      .bind(user.id, user.name, user.email, user.password_hash ?? null)
       .first<User>();
 
     if (!result) {

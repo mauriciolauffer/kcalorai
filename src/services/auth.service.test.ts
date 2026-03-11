@@ -2,37 +2,46 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AuthService } from "./auth.service";
 
 describe("AuthService", () => {
-  let userRepository: any;
+  let auth: any;
   let authService: AuthService;
-  const JWT_SECRET = "test-secret";
 
   beforeEach(() => {
-    userRepository = {
-      findByEmail: vi.fn(),
-      create: vi.fn(),
+    auth = {
+      api: {
+        signUpEmail: vi.fn(),
+      },
     };
-    authService = new AuthService(userRepository, JWT_SECRET);
+    authService = new AuthService(auth);
   });
 
   it("should signup a new user", async () => {
-    const data = { email: "test@example.com", password: "Password123" };
-    userRepository.findByEmail.mockResolvedValue(null);
-    userRepository.create.mockResolvedValue({
-      id: "uuid",
-      email: data.email,
+    const data = { name: "Test User", email: "test@example.com", password: "Password123" };
+    auth.api.signUpEmail.mockResolvedValue({
+      user: {
+        id: "uuid",
+        email: data.email,
+        name: data.name,
+      },
+      token: "test-token",
     });
 
     const result = await authService.signup(data);
 
     expect(result.user.email).toBe(data.email);
-    expect(result.token).toBeDefined();
-    expect(userRepository.create).toHaveBeenCalled();
+    expect(result.token).toBe("test-token");
+    expect(auth.api.signUpEmail).toHaveBeenCalledWith({
+      body: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+      },
+    });
   });
 
-  it("should throw error if email already in use", async () => {
-    const data = { email: "test@example.com", password: "Password123" };
-    userRepository.findByEmail.mockResolvedValue({ id: "1" });
+  it("should throw error if signup fails", async () => {
+    const data = { name: "Test User", email: "test@example.com", password: "Password123" };
+    auth.api.signUpEmail.mockResolvedValue(null);
 
-    await expect(authService.signup(data)).rejects.toThrow("Email already in use");
+    await expect(authService.signup(data)).rejects.toThrow("Failed to signup");
   });
 });
