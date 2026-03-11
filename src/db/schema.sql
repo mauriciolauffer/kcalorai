@@ -51,6 +51,7 @@ CREATE TABLE food_logs (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   food_id TEXT, -- NULL for quick add
+  name TEXT NOT NULL,
   date TEXT NOT NULL, -- YYYY-MM-DD
   meal TEXT NOT NULL, -- breakfast | lunch | dinner | snack
   servings REAL,
