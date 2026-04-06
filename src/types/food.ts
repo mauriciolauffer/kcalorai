@@ -34,7 +34,7 @@ export interface LogMealRequest {
    */
   date: string;
   meal: MealType;
-  name: string;
+  name?: string;
   calories: number;
   /**
    * @minimum 0

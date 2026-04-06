@@ -59,6 +59,23 @@ describe("Food Routes", () => {
     expect(body).toMatchObject(logData);
   });
 
+  it("POST /food should log a meal without name (Quick Add)", async () => {
+    const logData = {
+      calories: 500,
+      date: "2023-10-27",
+      meal: "lunch",
+    };
+    db.first.mockResolvedValue({ id: "log1", ...logData, name: "Quick Add", user_id: userId });
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.$post({ json: logData as any });
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as any;
+    expect(body.name).toBe("Quick Add");
+    expect(body.calories).toBe(500);
+  });
+
   it("GET /food should return logs for a date", async () => {
     const logs = [{ id: "log1", name: "Apple", calories: 95 }];
     db.all.mockResolvedValue({ results: logs });
