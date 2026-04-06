@@ -55,7 +55,7 @@ describe("FoodService", () => {
       user_id: userId,
     });
 
-    const result = await service.logMeal(userId, data as any);
+    const result = await service.logMeal(userId, data);
 
     expect(repository.createLog).toHaveBeenCalledWith(
       expect.objectContaining({
