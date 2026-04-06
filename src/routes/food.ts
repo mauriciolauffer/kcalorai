@@ -39,6 +39,24 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
       return c.json(log, 201);
     },
   )
+  .get(
+    "/summary",
+    typiaValidator("query", validateSummaryQuery, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const date = c.req.valid("query").date || new Date().toISOString().split("T")[0];
+      const foodRepository = new FoodRepository(c.env.DB);
+      const profileRepository = new ProfileRepository(c.env.DB);
+      const summaryService = new SummaryService(foodRepository, profileRepository);
+
+      const summary = await summaryService.getDailySummary(userId, date);
+      return c.json(summary);
+    },
+  )
   .patch(
     "/:id",
     typiaValidator("json", validateUpdateLog, (result) => {
@@ -100,25 +118,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
     const item = await service.getFoodById(id, userId);
     return c.json(item);
-  })
-  .get(
-    "/summary",
-    typiaValidator("query", validateSummaryQuery, (result) => {
-      if (!result.success) {
-        throw new ValidationError("Validation failed", result.errors);
-      }
-    }),
-    async (c) => {
-      const userId = getUserId(c);
-      const date = c.req.valid("query").date || new Date().toISOString().split("T")[0];
-      const foodRepository = new FoodRepository(c.env.DB);
-      const profileRepository = new ProfileRepository(c.env.DB);
-      const summaryService = new SummaryService(foodRepository, profileRepository);
-
-      const summary = await summaryService.getDailySummary(userId, date);
-      return c.json(summary);
-    },
-  );
+  });
 
 export default food;
 export type FoodApp = typeof food;

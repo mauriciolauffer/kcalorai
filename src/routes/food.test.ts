@@ -231,5 +231,51 @@ describe("Food Routes", () => {
       expect(body.remaining).toBeNull();
       expect(body.consumed.calories).toBe(0);
     });
+
+    it("should allow remaining calories to be negative when goal is exceeded", async () => {
+      const date = "2023-10-27";
+      const logs = [{ id: "log1", meal: "lunch", calories: 2500, protein_g: 0, fat_g: 0, carbs_g: 0 }];
+      const goal = { daily_calories: 2000, protein_g: 150, fat_g: 70, carbs_g: 200 };
+
+      db.all.mockResolvedValue({ results: logs });
+      db.first.mockResolvedValue(goal);
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.summary.$get({ query: { date } });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.consumed.calories).toBe(2500);
+      expect(body.remaining.calories).toBe(-500);
+    });
+
+    it("should correctly aggregate all meal types and ignore other days", async () => {
+      const date = "2023-10-27";
+      const logs = [
+        { id: "log1", meal: "breakfast", calories: 100, protein_g: 0, fat_g: 0, carbs_g: 0 },
+        { id: "log2", meal: "lunch", calories: 200, protein_g: 0, fat_g: 0, carbs_g: 0 },
+        { id: "log3", meal: "dinner", calories: 300, protein_g: 0, fat_g: 0, carbs_g: 0 },
+        { id: "log4", meal: "snack", calories: 400, protein_g: 0, fat_g: 0, carbs_g: 0 },
+      ];
+      db.all.mockResolvedValue({ results: logs });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.summary.$get({ query: { date } });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.consumed.calories).toBe(1000);
+      expect(body.meals).toHaveLength(4);
+      expect(body.meals.find((m: any) => m.meal === "breakfast").calories).toBe(100);
+      expect(body.meals.find((m: any) => m.meal === "lunch").calories).toBe(200);
+      expect(body.meals.find((m: any) => m.meal === "dinner").calories).toBe(300);
+      expect(body.meals.find((m: any) => m.meal === "snack").calories).toBe(400);
+
+      // The filtering logic happens in the repository and service, but here we've mocked the results to match our expectations.
+      // We'll verify the service filtering in a unit test or through the mock interaction.
+      expect(db.all).toHaveBeenCalled();
+      const bindCall = db.bind.mock.calls.find((call: any) => call.includes(date));
+      expect(bindCall).toBeDefined();
+    });
   });
 });
