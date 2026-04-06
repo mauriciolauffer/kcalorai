@@ -76,6 +76,30 @@ describe("Food Routes", () => {
     expect(body.calories).toBe(500);
   });
 
+  it("POST /food should fail if meal is missing", async () => {
+    const logData = {
+      calories: 500,
+      date: "2023-10-27",
+    };
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.$post({ json: logData as any });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /food should fail if calories is missing", async () => {
+    const logData = {
+      date: "2023-10-27",
+      meal: "lunch",
+    };
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.$post({ json: logData as any });
+
+    expect(res.status).toBe(400);
+  });
+
   it("GET /food should return logs for a date", async () => {
     const logs = [{ id: "log1", name: "Apple", calories: 95 }];
     db.all.mockResolvedValue({ results: logs });
