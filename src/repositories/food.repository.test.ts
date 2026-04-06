@@ -103,6 +103,26 @@ describe("FoodRepository", () => {
     expect(results).toEqual(expectedFoods);
   });
 
+  it("should return empty array for empty or whitespace query", async () => {
+    const userId = "user1";
+
+    const result1 = await repository.searchFoods("", userId);
+    const result2 = await repository.searchFoods("   ", userId);
+
+    expect(result1).toEqual([]);
+    expect(result2).toEqual([]);
+    expect(db.prepare).not.toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods"));
+  });
+
+  it("should apply LIMIT 50 to search query", async () => {
+    const userId = "user1";
+    db.all.mockResolvedValue({ results: [] });
+
+    await repository.searchFoods("apple", userId);
+
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("LIMIT 50"));
+  });
+
   it("should get food by id", async () => {
     const foodId = "f1";
     const userId = "user1";

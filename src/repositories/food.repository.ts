@@ -90,11 +90,16 @@ export class FoodRepository {
   }
 
   async searchFoods(query: string, userId: string): Promise<Food[]> {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
+
     const result = await this.db
       .prepare(
-        "SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?) ORDER BY name ASC",
+        "SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?) ORDER BY name ASC LIMIT 50",
       )
-      .bind(`%${query}%`, userId)
+      .bind(`%${trimmedQuery}%`, userId)
       .all<Food>();
     return result.results;
   }
