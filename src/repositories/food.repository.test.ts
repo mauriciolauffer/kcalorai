@@ -70,7 +70,9 @@ describe("FoodRepository", () => {
 
     const results = await repository.getLogsByDate(userId, date);
 
-    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM food_logs WHERE user_id = ? AND date = ?"));
+    expect(db.prepare).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT * FROM food_logs WHERE user_id = ? AND date = ?"),
+    );
     expect(results).toEqual(expectedLogs);
   });
 
@@ -82,7 +84,11 @@ describe("FoodRepository", () => {
 
     const results = await repository.searchFoods(query, userId);
 
-    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?)"));
+    expect(db.prepare).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?)",
+      ),
+    );
     expect(db.bind).toHaveBeenCalledWith("%ppl%", userId);
     expect(results).toEqual(expectedFoods);
   });
@@ -131,7 +137,11 @@ describe("FoodRepository", () => {
 
     const result = await repository.getFoodById(foodId, userId);
 
-    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods WHERE id = ? AND (user_id IS NULL OR user_id = ?)"));
+    expect(db.prepare).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "SELECT * FROM foods WHERE id = ? AND (user_id IS NULL OR user_id = ?)",
+      ),
+    );
     expect(db.bind).toHaveBeenCalledWith(foodId, userId);
     expect(result).toEqual(expectedFood);
   });

@@ -31,12 +31,40 @@ describe("FoodService", () => {
 
     const result = await service.logMeal(userId, data);
 
-    expect(repository.createLog).toHaveBeenCalledWith(expect.objectContaining({
-      user_id: userId,
-      name: data.name,
-      calories: data.calories,
-    }));
+    expect(repository.createLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: userId,
+        name: data.name,
+        calories: data.calories,
+      }),
+    );
     expect(result.id).toBe("log1");
+  });
+
+  it("should log a meal with default name if name is missing (Quick Add)", async () => {
+    const userId = "user1";
+    const data = {
+      calories: 500,
+      date: "2023-10-27",
+      meal: "lunch" as const,
+    };
+    repository.createLog.mockResolvedValue({
+      id: "log1",
+      ...data,
+      name: "Quick Add",
+      user_id: userId,
+    });
+
+    const result = await service.logMeal(userId, data);
+
+    expect(repository.createLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: userId,
+        name: "Quick Add",
+        calories: data.calories,
+      }),
+    );
+    expect(result.name).toBe("Quick Add");
   });
 
   it("should throw NotFoundError if update fails", async () => {
