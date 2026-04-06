@@ -108,7 +108,7 @@ describe("Food Routes", () => {
     const res = await client.food.$get({ query: { date: "2023-10-27" } });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.logs).toEqual(logs);
   });
 
@@ -123,7 +123,7 @@ describe("Food Routes", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.name).toBe("Green Apple");
   });
 
@@ -136,7 +136,7 @@ describe("Food Routes", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.success).toBe(true);
   });
 

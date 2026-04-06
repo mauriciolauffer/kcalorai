@@ -31,11 +31,13 @@ describe("FoodService", () => {
 
     const result = await service.logMeal(userId, data);
 
-    expect(repository.createLog).toHaveBeenCalledWith(expect.objectContaining({
-      user_id: userId,
-      name: data.name,
-      calories: data.calories,
-    }));
+    expect(repository.createLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: userId,
+        name: data.name,
+        calories: data.calories,
+      }),
+    );
     expect(result.id).toBe("log1");
   });
 
@@ -46,15 +48,22 @@ describe("FoodService", () => {
       date: "2023-10-27",
       meal: "lunch" as const,
     };
-    repository.createLog.mockResolvedValue({ id: "log1", ...data, name: "Quick Add", user_id: userId });
+    repository.createLog.mockResolvedValue({
+      id: "log1",
+      ...data,
+      name: "Quick Add",
+      user_id: userId,
+    });
 
     const result = await service.logMeal(userId, data as any);
 
-    expect(repository.createLog).toHaveBeenCalledWith(expect.objectContaining({
-      user_id: userId,
-      name: "Quick Add",
-      calories: data.calories,
-    }));
+    expect(repository.createLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: userId,
+        name: "Quick Add",
+        calories: data.calories,
+      }),
+    );
     expect(result.name).toBe("Quick Add");
   });
 
