@@ -99,16 +99,30 @@ describe("Food Routes", () => {
     expect(body.success).toBe(true);
   });
 
-  it("GET /food/search should search foods", async () => {
-    const results = [{ id: "f1", name: "Apple" }];
+  it("GET /food/search should search foods and include calories/serving data", async () => {
+    const results = [
+      {
+        id: "f1",
+        name: "Apple",
+        calories: 95,
+        serving_grams: 182,
+        protein_g: 0.5,
+        fat_g: 0.3,
+        carbs_g: 25,
+      },
+    ];
     db.all.mockResolvedValue({ results });
 
     const client = testClient(app, { ...env, DB: db } as any);
     const res = await client.food.search.$get({ query: { q: "apple" } });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.results).toEqual(results);
+    const body = (await res.json()) as any;
+    expect(body.results[0]).toMatchObject({
+      name: "Apple",
+      calories: 95,
+      serving_grams: 182,
+    });
   });
 
   it("GET /food/items/:id should get a food item", async () => {
