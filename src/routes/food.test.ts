@@ -63,12 +63,12 @@ describe("Food Routes", () => {
     const logData = {
       calories: 500,
       date: "2023-10-27",
-      meal: "lunch",
+      meal: "lunch" as const,
     };
     db.first.mockResolvedValue({ id: "log1", ...logData, name: "Quick Add", user_id: userId });
 
     const client = testClient(app, { ...env, DB: db } as any);
-    const res = await client.food.$post({ json: logData as any });
+    const res = await client.food.$post({ json: logData });
 
     expect(res.status).toBe(201);
     const body = (await res.json()) as any;
