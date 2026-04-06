@@ -1,4 +1,4 @@
-import { FoodLog } from "../types/food";
+import { FoodLog, Food } from "../types/food";
 
 export class FoodRepository {
   constructor(private db: D1Database) {}
@@ -87,5 +87,27 @@ export class FoodRepository {
       .bind(userId, date)
       .all<FoodLog>();
     return result.results;
+  }
+
+  async searchFoods(query: string, userId: string): Promise<Food[]> {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
+
+    const result = await this.db
+      .prepare(
+        "SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?) ORDER BY name ASC LIMIT 50",
+      )
+      .bind(`%${trimmedQuery}%`, userId)
+      .all<Food>();
+    return result.results;
+  }
+
+  async getFoodById(id: string, userId: string): Promise<Food | null> {
+    return this.db
+      .prepare("SELECT * FROM foods WHERE id = ? AND (user_id IS NULL OR user_id = ?)")
+      .bind(id, userId)
+      .first<Food>();
   }
 }

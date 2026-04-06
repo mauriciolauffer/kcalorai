@@ -64,3 +64,7 @@ export interface UpdateFoodLogRequest {
   carbs_g?: number;
   servings?: number;
 }
+
+export interface SearchFoodRequest {
+  q?: string;
+}

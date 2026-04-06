@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import typia from "typia";
 import { typiaValidator } from "@hono/typia-validator";
 import { Env, AuthVariables } from "../types";
-import { LogMealRequest, UpdateFoodLogRequest } from "../types/food";
+import { LogMealRequest, UpdateFoodLogRequest, SearchFoodRequest } from "../types/food";
 import { FoodRepository } from "../repositories/food.repository";
 import { FoodService } from "../services/food.service";
 import { authMiddleware, getUserId } from "../middlewares/auth";
@@ -10,6 +10,7 @@ import { ValidationError } from "../types/errors";
 
 const validateLogMeal = typia.createValidate<LogMealRequest>();
 const validateUpdateLog = typia.createValidate<UpdateFoodLogRequest>();
+const validateSearchFood = typia.createValidate<SearchFoodRequest>();
 
 const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
@@ -65,6 +66,32 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
     const logs = await service.getDailyLogs(userId, date);
     return c.json({ logs });
+  })
+  .get(
+    "/search",
+    typiaValidator("query", validateSearchFood, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const query = c.req.valid("query").q || "";
+      const repository = new FoodRepository(c.env.DB);
+      const service = new FoodService(repository);
+
+      const results = await service.searchFoods(query, userId);
+      return c.json({ results });
+    },
+  )
+  .get("/items/:id", async (c) => {
+    const userId = getUserId(c);
+    const id = c.req.param("id");
+    const repository = new FoodRepository(c.env.DB);
+    const service = new FoodService(repository);
+
+    const item = await service.getFoodById(id, userId);
+    return c.json(item);
   });
 
 export default food;
