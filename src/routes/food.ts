@@ -65,6 +65,24 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
     const logs = await service.getDailyLogs(userId, date);
     return c.json({ logs });
+  })
+  .get("/search", async (c) => {
+    const userId = getUserId(c);
+    const query = c.req.query("q") || "";
+    const repository = new FoodRepository(c.env.DB);
+    const service = new FoodService(repository);
+
+    const results = await service.searchFoods(query, userId);
+    return c.json({ results });
+  })
+  .get("/items/:id", async (c) => {
+    const userId = getUserId(c);
+    const id = c.req.param("id");
+    const repository = new FoodRepository(c.env.DB);
+    const service = new FoodService(repository);
+
+    const item = await service.getFoodById(id, userId);
+    return c.json(item);
   });
 
 export default food;

@@ -13,6 +13,8 @@ describe("FoodService", () => {
       updateLog: vi.fn(),
       deleteLog: vi.fn(),
       getLogsByDate: vi.fn(),
+      searchFoods: vi.fn(),
+      getFoodById: vi.fn(),
     };
     service = new FoodService(repository as unknown as FoodRepository);
   });
@@ -45,5 +47,34 @@ describe("FoodService", () => {
   it("should throw NotFoundError if delete fails", async () => {
     repository.deleteLog.mockResolvedValue(false);
     await expect(service.deleteLog("u1", "l1")).rejects.toThrow(NotFoundError);
+  });
+
+  it("should search foods", async () => {
+    const userId = "user1";
+    const query = "apple";
+    const expectedFoods = [{ id: "f1", name: "Apple" }];
+    repository.searchFoods.mockResolvedValue(expectedFoods);
+
+    const result = await service.searchFoods(query, userId);
+
+    expect(repository.searchFoods).toHaveBeenCalledWith(query, userId);
+    expect(result).toEqual(expectedFoods);
+  });
+
+  it("should get food by id", async () => {
+    const foodId = "f1";
+    const userId = "user1";
+    const expectedFood = { id: foodId, name: "Apple" };
+    repository.getFoodById.mockResolvedValue(expectedFood);
+
+    const result = await service.getFoodById(foodId, userId);
+
+    expect(repository.getFoodById).toHaveBeenCalledWith(foodId, userId);
+    expect(result).toEqual(expectedFood);
+  });
+
+  it("should throw NotFoundError if food not found by id", async () => {
+    repository.getFoodById.mockResolvedValue(null);
+    await expect(service.getFoodById("nonexistent", "user1")).rejects.toThrow(NotFoundError);
   });
 });

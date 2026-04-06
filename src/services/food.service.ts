@@ -1,5 +1,5 @@
 import { FoodRepository } from "../repositories/food.repository";
-import { LogMealRequest, UpdateFoodLogRequest, FoodLog } from "../types/food";
+import { LogMealRequest, UpdateFoodLogRequest, FoodLog, Food } from "../types/food";
 import { NotFoundError } from "../types/errors";
 
 export class FoodService {
@@ -37,5 +37,17 @@ export class FoodService {
 
   async getDailyLogs(userId: string, date: string): Promise<FoodLog[]> {
     return this.foodRepository.getLogsByDate(userId, date);
+  }
+
+  async searchFoods(query: string, userId: string): Promise<Food[]> {
+    return this.foodRepository.searchFoods(query, userId);
+  }
+
+  async getFoodById(id: string, userId: string): Promise<Food> {
+    const food = await this.foodRepository.getFoodById(id, userId);
+    if (!food) {
+      throw new NotFoundError("Food item not found");
+    }
+    return food;
   }
 }

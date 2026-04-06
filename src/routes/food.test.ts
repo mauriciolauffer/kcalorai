@@ -98,4 +98,28 @@ describe("Food Routes", () => {
     const body = await res.json() as any;
     expect(body.success).toBe(true);
   });
+
+  it("GET /food/search should search foods", async () => {
+    const results = [{ id: "f1", name: "Apple" }];
+    db.all.mockResolvedValue({ results });
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.search.$get({ query: { q: "apple" } });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.results).toEqual(results);
+  });
+
+  it("GET /food/items/:id should get a food item", async () => {
+    const item = { id: "f1", name: "Apple" };
+    db.first.mockResolvedValue(item);
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.items[":id"].$get({ param: { id: "f1" } });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual(item);
+  });
 });

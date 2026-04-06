@@ -73,4 +73,30 @@ describe("FoodRepository", () => {
     expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM food_logs WHERE user_id = ? AND date = ?"));
     expect(results).toEqual(expectedLogs);
   });
+
+  it("should search foods", async () => {
+    const userId = "user1";
+    const query = "apple";
+    const expectedFoods = [{ id: "f1", name: "Apple" }];
+    db.all.mockResolvedValue({ results: expectedFoods });
+
+    const results = await repository.searchFoods(query, userId);
+
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods WHERE name LIKE ? AND (user_id IS NULL OR user_id = ?)"));
+    expect(db.bind).toHaveBeenCalledWith("%apple%", userId);
+    expect(results).toEqual(expectedFoods);
+  });
+
+  it("should get food by id", async () => {
+    const foodId = "f1";
+    const userId = "user1";
+    const expectedFood = { id: foodId, name: "Apple" };
+    db.first.mockResolvedValue(expectedFood);
+
+    const result = await repository.getFoodById(foodId, userId);
+
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods WHERE id = ? AND (user_id IS NULL OR user_id = ?)"));
+    expect(db.bind).toHaveBeenCalledWith(foodId, userId);
+    expect(result).toEqual(expectedFood);
+  });
 });
