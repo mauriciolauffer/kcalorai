@@ -85,4 +85,13 @@ export class ProfileRepository {
       .bind(userId)
       .first<UserGoal>();
   }
+
+  async getGoalByDate(userId: string, date: string): Promise<UserGoal | null> {
+    return this.db
+      .prepare(
+        "SELECT * FROM user_goals WHERE user_id = ? AND effective_from <= ? ORDER BY effective_from DESC, created_at DESC LIMIT 1",
+      )
+      .bind(userId, date)
+      .first<UserGoal>();
+  }
 }

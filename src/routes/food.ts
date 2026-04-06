@@ -2,15 +2,23 @@ import { Hono } from "hono";
 import typia from "typia";
 import { typiaValidator } from "@hono/typia-validator";
 import { Env, AuthVariables } from "../types";
-import { LogMealRequest, UpdateFoodLogRequest, SearchFoodRequest } from "../types/food";
+import {
+  LogMealRequest,
+  UpdateFoodLogRequest,
+  SearchFoodRequest,
+  SummaryQuery,
+} from "../types/food";
 import { FoodRepository } from "../repositories/food.repository";
 import { FoodService } from "../services/food.service";
+import { SummaryService } from "../services/summary.service";
+import { ProfileRepository } from "../repositories/profile.repository";
 import { authMiddleware, getUserId } from "../middlewares/auth";
 import { ValidationError } from "../types/errors";
 
 const validateLogMeal = typia.createValidate<LogMealRequest>();
 const validateUpdateLog = typia.createValidate<UpdateFoodLogRequest>();
 const validateSearchFood = typia.createValidate<SearchFoodRequest>();
+const validateSummaryQuery = typia.createValidate<SummaryQuery>();
 
 const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
@@ -92,7 +100,25 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
     const item = await service.getFoodById(id, userId);
     return c.json(item);
-  });
+  })
+  .get(
+    "/summary",
+    typiaValidator("query", validateSummaryQuery, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const date = c.req.valid("query").date || new Date().toISOString().split("T")[0];
+      const foodRepository = new FoodRepository(c.env.DB);
+      const profileRepository = new ProfileRepository(c.env.DB);
+      const summaryService = new SummaryService(foodRepository, profileRepository);
+
+      const summary = await summaryService.getDailySummary(userId, date);
+      return c.json(summary);
+    },
+  );
 
 export default food;
 export type FoodApp = typeof food;
