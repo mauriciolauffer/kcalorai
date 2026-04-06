@@ -9,7 +9,7 @@ export class FoodService {
     return this.foodRepository.createLog({
       user_id: userId,
       food_id: data.food_id ?? null,
-      name: data.name ?? "Quick Add",
+      name: data.name?.trim() || "Quick Add",
       date: data.date,
       meal: data.meal,
       servings: data.servings ?? null,
