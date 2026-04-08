@@ -311,6 +311,26 @@ describe("Food Routes", () => {
       expect(body.days[0].date).toBe("2024-01-01");
       expect(body.days[6].date).toBe("2024-01-07");
       expect(body.average.calories).toBe(300);
+      expect(body.average.protein_g).toBe(4.3);
+    });
+
+    it("should use current date as default endDate", async () => {
+      const today = new Date().toISOString().split("T")[0];
+      db.all.mockResolvedValue({ results: [] });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food["weekly-summary"].$get({ query: {} });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.days[6].date).toBe(today);
+    });
+
+    it("should fail for invalid date format", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food["weekly-summary"].$get({ query: { endDate: "invalid-date" } });
+
+      expect(res.status).toBe(400);
     });
   });
 });
