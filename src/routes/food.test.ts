@@ -278,4 +278,39 @@ describe("Food Routes", () => {
       expect(bindCall).toBeDefined();
     });
   });
+
+  describe("GET /food/weekly-summary", () => {
+    it("should return weekly trends and averages", async () => {
+      const endDate = "2024-01-07";
+      const logs = [
+        {
+          date: "2024-01-01",
+          calories: 1000,
+          protein_g: 10,
+          fat_g: 10,
+          carbs_g: 10,
+        },
+        {
+          date: "2024-01-07",
+          calories: 1100,
+          protein_g: 20,
+          fat_g: 20,
+          carbs_g: 20,
+        },
+      ];
+
+      db.all.mockResolvedValue({ results: logs });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food["weekly-summary"].$get({ query: { endDate } });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+
+      expect(body.days).toHaveLength(7);
+      expect(body.days[0].date).toBe("2024-01-01");
+      expect(body.days[6].date).toBe("2024-01-07");
+      expect(body.average.calories).toBe(300);
+    });
+  });
 });
