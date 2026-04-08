@@ -68,3 +68,29 @@ export interface UpdateFoodLogRequest {
 export interface SearchFoodRequest {
   q?: string;
 }
+
+export interface NutritionalValues {
+  calories: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+}
+
+export interface MealSummary extends NutritionalValues {
+  meal: MealType;
+}
+
+export interface DailySummary {
+  date: string;
+  consumed: NutritionalValues;
+  goal: NutritionalValues | null;
+  remaining: NutritionalValues | null;
+  meals: MealSummary[];
+}
+
+export interface SummaryQuery {
+  /**
+   * @format date
+   */
+  date?: string;
+}
