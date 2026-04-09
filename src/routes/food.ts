@@ -7,6 +7,7 @@ import {
   UpdateFoodLogRequest,
   SearchFoodRequest,
   SummaryQuery,
+  WeeklySummaryQuery,
 } from "../types/food";
 import { FoodRepository } from "../repositories/food.repository";
 import { FoodService } from "../services/food.service";
@@ -19,6 +20,7 @@ const validateLogMeal = typia.createValidate<LogMealRequest>();
 const validateUpdateLog = typia.createValidate<UpdateFoodLogRequest>();
 const validateSearchFood = typia.createValidate<SearchFoodRequest>();
 const validateSummaryQuery = typia.createValidate<SummaryQuery>();
+const validateWeeklySummaryQuery = typia.createValidate<WeeklySummaryQuery>();
 
 const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
@@ -54,6 +56,24 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
       const summaryService = new SummaryService(foodRepository, profileRepository);
 
       const summary = await summaryService.getDailySummary(userId, date);
+      return c.json(summary);
+    },
+  )
+  .get(
+    "/weekly-summary",
+    typiaValidator("query", validateWeeklySummaryQuery, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const endDate = c.req.valid("query").endDate || new Date().toISOString().split("T")[0];
+      const foodRepository = new FoodRepository(c.env.DB);
+      const profileRepository = new ProfileRepository(c.env.DB);
+      const summaryService = new SummaryService(foodRepository, profileRepository);
+
+      const summary = await summaryService.getWeeklySummary(userId, endDate);
       return c.json(summary);
     },
   )

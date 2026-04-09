@@ -94,3 +94,19 @@ export interface SummaryQuery {
    */
   date?: string;
 }
+
+export interface DailyTrend extends NutritionalValues {
+  date: string;
+}
+
+export interface WeeklySummary {
+  days: DailyTrend[];
+  average: NutritionalValues;
+}
+
+export interface WeeklySummaryQuery {
+  /**
+   * @format date
+   */
+  endDate?: string;
+}

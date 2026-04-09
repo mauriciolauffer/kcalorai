@@ -1,6 +1,13 @@
 import { FoodRepository } from "../repositories/food.repository";
 import { ProfileRepository } from "../repositories/profile.repository";
-import { DailySummary, MealType, MealSummary, NutritionalValues } from "../types/food";
+import {
+  DailySummary,
+  MealType,
+  MealSummary,
+  NutritionalValues,
+  WeeklySummary,
+  DailyTrend,
+} from "../types/food";
 
 export class SummaryService {
   constructor(
@@ -56,6 +63,43 @@ export class SummaryService {
       goal: target,
       remaining,
       meals: mealSummaries,
+    };
+  }
+
+  async getWeeklySummary(userId: string, endDate: string): Promise<WeeklySummary> {
+    const start = new Date(endDate);
+    start.setUTCDate(start.getUTCDate() - 6);
+
+    const startDateStr = start.toISOString().split("T")[0];
+
+    const logs = await this.foodRepository.getLogsByDateRange(userId, startDateStr, endDate);
+
+    const days: DailyTrend[] = [];
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(start);
+      current.setUTCDate(start.getUTCDate() + i);
+      const dateStr = current.toISOString().split("T")[0];
+
+      const dayLogs = logs.filter((log) => log.date === dateStr);
+      days.push({
+        date: dateStr,
+        calories: dayLogs.reduce((acc, log) => acc + log.calories, 0),
+        protein_g: dayLogs.reduce((acc, log) => acc + log.protein_g, 0),
+        fat_g: dayLogs.reduce((acc, log) => acc + log.fat_g, 0),
+        carbs_g: dayLogs.reduce((acc, log) => acc + log.carbs_g, 0),
+      });
+    }
+
+    const average: NutritionalValues = {
+      calories: Math.round(days.reduce((acc, day) => acc + day.calories, 0) / 7),
+      protein_g: Math.round((days.reduce((acc, day) => acc + day.protein_g, 0) / 7) * 10) / 10,
+      fat_g: Math.round((days.reduce((acc, day) => acc + day.fat_g, 0) / 7) * 10) / 10,
+      carbs_g: Math.round((days.reduce((acc, day) => acc + day.carbs_g, 0) / 7) * 10) / 10,
+    };
+
+    return {
+      days,
+      average,
     };
   }
 }

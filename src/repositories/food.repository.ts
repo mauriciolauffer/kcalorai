@@ -89,6 +89,16 @@ export class FoodRepository {
     return result.results;
   }
 
+  async getLogsByDateRange(userId: string, startDate: string, endDate: string): Promise<FoodLog[]> {
+    const result = await this.db
+      .prepare(
+        "SELECT * FROM food_logs WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY date ASC, created_at ASC",
+      )
+      .bind(userId, startDate, endDate)
+      .all<FoodLog>();
+    return result.results;
+  }
+
   async searchFoods(query: string, userId: string): Promise<Food[]> {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) {
