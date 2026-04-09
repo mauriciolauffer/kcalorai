@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Temporal } from "temporal-polyfill";
 import { testClient } from "hono/testing";
 import { app } from "../app";
 
@@ -315,7 +316,7 @@ describe("Food Routes", () => {
     });
 
     it("should use current date as default endDate", async () => {
-      const today = new Date().toISOString().split("T")[0];
+      const today = Temporal.Now.plainDateISO().toString();
       db.all.mockResolvedValue({ results: [] });
 
       const client = testClient(app, { ...env, DB: db } as any);

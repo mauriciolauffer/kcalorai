@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill";
 import { FoodRepository } from "../repositories/food.repository";
 import { ProfileRepository } from "../repositories/profile.repository";
 import {
@@ -67,18 +68,17 @@ export class SummaryService {
   }
 
   async getWeeklySummary(userId: string, endDate: string): Promise<WeeklySummary> {
-    const start = new Date(endDate);
-    start.setUTCDate(start.getUTCDate() - 6);
+    const end = Temporal.PlainDate.from(endDate);
+    const start = end.subtract({ days: 6 });
 
-    const startDateStr = start.toISOString().split("T")[0];
+    const startDateStr = start.toString();
 
     const logs = await this.foodRepository.getLogsByDateRange(userId, startDateStr, endDate);
 
     const days: DailyTrend[] = [];
     for (let i = 0; i < 7; i++) {
-      const current = new Date(start);
-      current.setUTCDate(start.getUTCDate() + i);
-      const dateStr = current.toISOString().split("T")[0];
+      const current = start.add({ days: i });
+      const dateStr = current.toString();
 
       const dayLogs = logs.filter((log) => log.date === dateStr);
       days.push({
