@@ -67,9 +67,8 @@ export class SummaryService {
   }
 
   async getWeeklySummary(userId: string, endDate: string): Promise<WeeklySummary> {
-    const end = new Date(endDate);
     const start = new Date(endDate);
-    start.setDate(end.getDate() - 6);
+    start.setUTCDate(start.getUTCDate() - 6);
 
     const startDateStr = start.toISOString().split("T")[0];
 
