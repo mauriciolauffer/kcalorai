@@ -77,7 +77,7 @@ export class SummaryService {
     const days: DailyTrend[] = [];
     for (let i = 0; i < 7; i++) {
       const current = new Date(start);
-      current.setDate(start.getDate() + i);
+      current.setUTCDate(start.getUTCDate() + i);
       const dateStr = current.toISOString().split("T")[0];
 
       const dayLogs = logs.filter((log) => log.date === dateStr);
