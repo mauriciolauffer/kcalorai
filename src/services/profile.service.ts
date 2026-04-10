@@ -37,7 +37,7 @@ export class ProfileService {
       user_id: userId,
       daily_calories: dailyCalories,
       ...macros,
-      effective_from: Temporal.Now.plainDateISO().toString(),
+      effective_from: Temporal.Now.plainDateISO("UTC").toString(),
     });
 
     return {
