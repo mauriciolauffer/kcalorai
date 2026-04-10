@@ -114,7 +114,7 @@ describe("ProfileService", () => {
       expect(result.protein_g).toBe(150); // 2000 * 0.3 / 4
       expect(result.fat_g).toBe(67); // 2000 * 0.3 / 9
       expect(result.carbs_g).toBe(200); // 2000 * 0.4 / 4
-      expect(result.effective_from).toBe(Temporal.Now.plainDateISO().toString());
+      expect(result.effective_from).toBe(Temporal.Now.plainDateISO("UTC").toString());
     });
 
     it("should update goal with custom macros and effective_from", async () => {
