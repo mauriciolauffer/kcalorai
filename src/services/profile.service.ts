@@ -64,7 +64,7 @@ export class ProfileService {
       macros = this.calculateDefaultMacros(daily_calories);
     }
 
-    const effective_from = data.effective_from ?? Temporal.Now.plainDateISO().toString();
+    const effective_from = data.effective_from ?? Temporal.Now.plainDateISO("UTC").toString();
 
     return this.profileRepository.createGoal({
       user_id: userId,
