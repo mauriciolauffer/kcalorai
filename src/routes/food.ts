@@ -51,7 +51,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
     }),
     async (c) => {
       const userId = getUserId(c);
-      const date = c.req.valid("query").date || Temporal.Now.plainDateISO().toString();
+      const date = c.req.valid("query").date || Temporal.Now.plainDateISO("UTC").toString();
       const foodRepository = new FoodRepository(c.env.DB);
       const profileRepository = new ProfileRepository(c.env.DB);
       const summaryService = new SummaryService(foodRepository, profileRepository);
