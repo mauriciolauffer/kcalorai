@@ -107,17 +107,24 @@ describe("ProfileService", () => {
       profileRepository.createGoal.mockImplementation((goal: any) =>
         Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
       );
+      profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
+      profileRepository.getLatestGoal.mockResolvedValue({
+        id: "goal1",
+        daily_calories: 2000,
+        protein_g: 150,
+        fat_g: 67,
+        carbs_g: 200,
+        effective_from: Temporal.Now.plainDateISO("UTC").toString(),
+      });
 
       const result = await profileService.updateGoal("user1", { daily_calories });
 
-      expect(result.daily_calories).toBe(2000);
-      expect(result.protein_g).toBe(150); // 2000 * 0.3 / 4
-      expect(result.fat_g).toBe(67); // 2000 * 0.3 / 9
-      expect(result.carbs_g).toBe(200); // 2000 * 0.4 / 4
-      expect(result.effective_from).toBe(Temporal.Now.plainDateISO("UTC").toString());
+      expect(result.latest_goal?.daily_calories).toBe(2000);
+      expect(result.latest_goal?.protein_g).toBe(150);
+      expect(result.latest_goal?.effective_from).toBe(Temporal.Now.plainDateISO("UTC").toString());
     });
 
-    it("should update goal with custom macros and effective_from", async () => {
+    it("should update goal with custom macros when all are provided", async () => {
       const data = {
         daily_calories: 2500,
         protein_g: 200,
@@ -128,14 +135,55 @@ describe("ProfileService", () => {
       profileRepository.createGoal.mockImplementation((goal: any) =>
         Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
       );
+      profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
+      profileRepository.getLatestGoal.mockResolvedValue({
+        id: "goal1",
+        ...data,
+        created_at: "now",
+      });
 
       const result = await profileService.updateGoal("user1", data);
 
-      expect(result.daily_calories).toBe(2500);
-      expect(result.protein_g).toBe(200);
-      expect(result.fat_g).toBe(80);
-      expect(result.carbs_g).toBe(245);
-      expect(result.effective_from).toBe("2023-01-01");
+      expect(profileRepository.createGoal).toHaveBeenCalledWith({
+        user_id: "user1",
+        daily_calories: 2500,
+        protein_g: 200,
+        fat_g: 80,
+        carbs_g: 245,
+        effective_from: "2023-01-01",
+      });
+      expect(result.latest_goal?.protein_g).toBe(200);
+    });
+
+    it("should use default macros if any macro is missing", async () => {
+      const data = {
+        daily_calories: 2000,
+        protein_g: 180, // Missing fat_g and carbs_g
+      };
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+      profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
+      profileRepository.getLatestGoal.mockResolvedValue({
+        id: "goal1",
+        daily_calories: 2000,
+        protein_g: 150, // Default
+        fat_g: 67, // Default
+        carbs_g: 200, // Default
+        effective_from: Temporal.Now.plainDateISO("UTC").toString(),
+      });
+
+      const result = await profileService.updateGoal("user1", data);
+
+      expect(profileRepository.createGoal).toHaveBeenCalledWith({
+        user_id: "user1",
+        daily_calories: 2000,
+        protein_g: 150,
+        fat_g: 67,
+        carbs_g: 200,
+        effective_from: Temporal.Now.plainDateISO("UTC").toString(),
+      });
+      expect(result.latest_goal?.protein_g).toBe(150);
     });
   });
 });

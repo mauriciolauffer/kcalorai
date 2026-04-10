@@ -177,6 +177,7 @@ describe("Profile Routes", () => {
             return Promise.resolve({
               id: "new-goal-id",
               user_id: userId,
+              profile_completed: 1,
               daily_calories: 2000,
               protein_g: 150,
               fat_g: 67,
@@ -210,7 +211,7 @@ describe("Profile Routes", () => {
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as any;
-    expect(data.daily_calories).toBe(2000);
-    expect(data.effective_from).toBe("2023-10-27");
+    expect(data.latest_goal.daily_calories).toBe(2000);
+    expect(data.latest_goal.effective_from).toBe("2023-10-27");
   });
 });
