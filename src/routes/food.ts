@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Temporal } from "temporal-polyfill";
 import typia from "typia";
 import { typiaValidator } from "@hono/typia-validator";
 import { Env, AuthVariables } from "../types";
@@ -50,7 +51,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
     }),
     async (c) => {
       const userId = getUserId(c);
-      const date = c.req.valid("query").date || new Date().toISOString().split("T")[0];
+      const date = c.req.valid("query").date || Temporal.Now.plainDateISO("UTC").toString();
       const foodRepository = new FoodRepository(c.env.DB);
       const profileRepository = new ProfileRepository(c.env.DB);
       const summaryService = new SummaryService(foodRepository, profileRepository);
@@ -68,7 +69,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
     }),
     async (c) => {
       const userId = getUserId(c);
-      const endDate = c.req.valid("query").endDate || new Date().toISOString().split("T")[0];
+      const endDate = c.req.valid("query").endDate || Temporal.Now.plainDateISO("UTC").toString();
       const foodRepository = new FoodRepository(c.env.DB);
       const profileRepository = new ProfileRepository(c.env.DB);
       const summaryService = new SummaryService(foodRepository, profileRepository);
@@ -106,7 +107,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   })
   .get("/", async (c) => {
     const userId = getUserId(c);
-    const date = c.req.query("date") || new Date().toISOString().split("T")[0];
+    const date = c.req.query("date") || Temporal.Now.plainDateISO("UTC").toString();
     const repository = new FoodRepository(c.env.DB);
     const service = new FoodService(repository);
 

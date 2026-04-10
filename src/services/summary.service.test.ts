@@ -78,5 +78,32 @@ describe("SummaryService", () => {
       expect(summary.average.calories).toBe(0);
       expect(summary.days.every(d => d.calories === 0)).toBe(true);
     });
+
+    it("should handle month boundaries correctly", async () => {
+      const userId = "user-1";
+      const endDate = "2024-03-02"; // March 2nd
+      // Expected range: Feb 25, 26, 27, 28, 29 (leap year), Mar 1, Mar 2
+
+      const logs = [
+        { date: "2024-02-28", calories: 1000, protein_g: 10, fat_g: 10, carbs_g: 10 },
+        { date: "2024-02-29", calories: 1200, protein_g: 20, fat_g: 20, carbs_g: 20 },
+        { date: "2024-03-01", calories: 1400, protein_g: 30, fat_g: 30, carbs_g: 30 },
+      ];
+
+      vi.mocked(mockFoodRepository.getLogsByDateRange).mockResolvedValue(logs as any);
+
+      const summary = await summaryService.getWeeklySummary(userId, endDate);
+
+      expect(summary.days).toHaveLength(7);
+      expect(summary.days[0].date).toBe("2024-02-25");
+      expect(summary.days[3].date).toBe("2024-02-28");
+      expect(summary.days[4].date).toBe("2024-02-29");
+      expect(summary.days[5].date).toBe("2024-03-01");
+      expect(summary.days[6].date).toBe("2024-03-02");
+
+      expect(summary.days[3].calories).toBe(1000);
+      expect(summary.days[4].calories).toBe(1200);
+      expect(summary.days[5].calories).toBe(1400);
+    });
   });
 });

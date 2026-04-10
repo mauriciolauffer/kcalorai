@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill";
 import { ProfileRepository } from "../repositories/profile.repository";
 import { SetupProfileRequest, ProfileResponse } from "../types/profile";
 
@@ -36,7 +37,7 @@ export class ProfileService {
       user_id: userId,
       daily_calories: dailyCalories,
       ...macros,
-      effective_from: new Date().toISOString().split("T")[0],
+      effective_from: Temporal.Now.plainDateISO("UTC").toString(),
     });
 
     return {

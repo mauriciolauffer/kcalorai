@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Temporal } from "temporal-polyfill";
 import { ProfileService } from "./profile.service";
 
 describe("ProfileService", () => {
@@ -40,6 +41,7 @@ describe("ProfileService", () => {
 
       const result = await profileService.setupProfile("user1", data);
 
+      expect(result.latest_goal?.effective_from).toBe(Temporal.Now.plainDateISO().toString());
       expect(result.latest_goal?.daily_calories).toBe(2759);
       // Macros: 30% Protein (207g), 30% Fat (92g), 40% Carbs (276g)
       // 2759 * 0.3 / 4 = 206.925 -> 207
