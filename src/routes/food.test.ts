@@ -316,7 +316,7 @@ describe("Food Routes", () => {
     });
 
     it("should use current date as default endDate", async () => {
-      const today = Temporal.Now.plainDateISO().toString();
+      const today = Temporal.Now.plainDateISO("UTC").toString();
       db.all.mockResolvedValue({ results: [] });
 
       const client = testClient(app, { ...env, DB: db } as any);
