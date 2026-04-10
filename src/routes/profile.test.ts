@@ -159,4 +159,58 @@ describe("Profile Routes", () => {
     const data = (await res.json()) as any;
     expect(data.profile.user_id).toBe(userId);
   });
+
+  it("POST /profile/goal should update the calorie goal", async () => {
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: userId, email: "test@example.com", name: "Test" },
+          session: { id: "session-id" },
+        }),
+      },
+    } as any);
+
+    const mockDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+              id: "new-goal-id",
+              user_id: userId,
+              daily_calories: 2000,
+              protein_g: 150,
+              fat_g: 67,
+              carbs_g: 200,
+              effective_from: "2023-10-27",
+              created_at: "2023-10-27T10:00:00Z",
+            });
+          }),
+        }),
+      }),
+    };
+
+    const client = testClient(app, {
+      ...env,
+      DB: mockDb as any,
+    });
+
+    const res = await client.profile.goal.$post(
+      {
+        json: {
+          daily_calories: 2000,
+          effective_from: "2023-10-27",
+        },
+      },
+      {
+        headers: {
+          cookie: "better-auth.session-token=test-token",
+        },
+      },
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.daily_calories).toBe(2000);
+    expect(data.effective_from).toBe("2023-10-27");
+  });
 });

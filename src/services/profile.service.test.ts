@@ -100,4 +100,42 @@ describe("ProfileService", () => {
       expect(result.latest_goal).toBeNull();
     });
   });
+
+  describe("updateGoal", () => {
+    it("should update goal with manual calories and default macros", async () => {
+      const daily_calories = 2000;
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+
+      const result = await profileService.updateGoal("user1", { daily_calories });
+
+      expect(result.daily_calories).toBe(2000);
+      expect(result.protein_g).toBe(150); // 2000 * 0.3 / 4
+      expect(result.fat_g).toBe(67); // 2000 * 0.3 / 9
+      expect(result.carbs_g).toBe(200); // 2000 * 0.4 / 4
+      expect(result.effective_from).toBe(Temporal.Now.plainDateISO().toString());
+    });
+
+    it("should update goal with custom macros and effective_from", async () => {
+      const data = {
+        daily_calories: 2500,
+        protein_g: 200,
+        fat_g: 80,
+        carbs_g: 245,
+        effective_from: "2023-01-01",
+      };
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+
+      const result = await profileService.updateGoal("user1", data);
+
+      expect(result.daily_calories).toBe(2500);
+      expect(result.protein_g).toBe(200);
+      expect(result.fat_g).toBe(80);
+      expect(result.carbs_g).toBe(245);
+      expect(result.effective_from).toBe("2023-01-01");
+    });
+  });
 });
