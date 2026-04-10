@@ -1,6 +1,6 @@
 import { Temporal } from "temporal-polyfill";
 import { ProfileRepository } from "../repositories/profile.repository";
-import { SetupProfileRequest, ProfileResponse } from "../types/profile";
+import { SetupProfileRequest, ProfileResponse, UpdateGoalRequest } from "../types/profile";
 
 export class ProfileService {
   constructor(private profileRepository: ProfileRepository) {}
@@ -44,6 +44,36 @@ export class ProfileService {
       profile,
       latest_goal: goal,
     };
+  }
+
+  async updateGoal(userId: string, data: UpdateGoalRequest): Promise<ProfileResponse> {
+    const daily_calories = data.daily_calories;
+    let macros: { protein_g: number; fat_g: number; carbs_g: number };
+
+    if (
+      data.protein_g !== undefined &&
+      data.fat_g !== undefined &&
+      data.carbs_g !== undefined
+    ) {
+      macros = {
+        protein_g: data.protein_g,
+        fat_g: data.fat_g,
+        carbs_g: data.carbs_g,
+      };
+    } else {
+      macros = this.calculateDefaultMacros(daily_calories);
+    }
+
+    const effective_from = data.effective_from ?? Temporal.Now.plainDateISO("UTC").toString();
+
+    await this.profileRepository.createGoal({
+      user_id: userId,
+      daily_calories,
+      ...macros,
+      effective_from,
+    });
+
+    return this.getProfile(userId);
   }
 
   private calculateDailyCalories(data: SetupProfileRequest): number {

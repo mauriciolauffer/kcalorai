@@ -57,3 +57,27 @@ export interface ProfileResponse {
   profile: UserProfile;
   latest_goal: UserGoal | null;
 }
+
+export interface UpdateGoalRequest {
+  /**
+   * @minimum 500
+   * @maximum 10000
+   */
+  daily_calories: number;
+  /**
+   * @minimum 0
+   */
+  protein_g?: number;
+  /**
+   * @minimum 0
+   */
+  fat_g?: number;
+  /**
+   * @minimum 0
+   */
+  carbs_g?: number;
+  /**
+   * @format date
+   */
+  effective_from?: string;
+}
