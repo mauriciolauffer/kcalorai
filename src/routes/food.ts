@@ -107,7 +107,7 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   })
   .get("/", async (c) => {
     const userId = getUserId(c);
-    const date = c.req.query("date") || Temporal.Now.plainDateISO().toString();
+    const date = c.req.query("date") || Temporal.Now.plainDateISO("UTC").toString();
     const repository = new FoodRepository(c.env.DB);
     const service = new FoodService(repository);
 
