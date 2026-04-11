@@ -32,7 +32,9 @@ describe("ReminderRepository", () => {
 
     const result = await repository.upsertSettings(userId, true);
     expect(result.enabled).toBe(true);
-    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO reminder_settings"));
+    expect(db.prepare).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO reminder_settings"),
+    );
   });
 
   it("should get all reminders for a user", async () => {
