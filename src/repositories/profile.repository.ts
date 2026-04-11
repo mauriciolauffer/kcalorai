@@ -20,8 +20,8 @@ export class ProfileRepository {
   async upsertProfile(profile: Partial<UserProfile> & { user_id: string }): Promise<UserProfile> {
     const result = await this.db
       .prepare(
-        `INSERT INTO user_profiles (user_id, age, height_cm, weight_kg, gender, activity_level, goal, profile_completed)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO user_profiles (user_id, age, height_cm, weight_kg, gender, activity_level, goal, timezone, profile_completed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(user_id) DO UPDATE SET
            age = COALESCE(excluded.age, user_profiles.age),
            height_cm = COALESCE(excluded.height_cm, user_profiles.height_cm),
@@ -29,6 +29,7 @@ export class ProfileRepository {
            gender = COALESCE(excluded.gender, user_profiles.gender),
            activity_level = COALESCE(excluded.activity_level, user_profiles.activity_level),
            goal = COALESCE(excluded.goal, user_profiles.goal),
+           timezone = COALESCE(excluded.timezone, user_profiles.timezone),
            profile_completed = COALESCE(excluded.profile_completed, user_profiles.profile_completed),
            updated_at = datetime('now')
          RETURNING *`,
@@ -41,6 +42,7 @@ export class ProfileRepository {
         profile.gender ?? null,
         profile.activity_level ?? null,
         profile.goal ?? null,
+        profile.timezone ?? "UTC",
         profile.profile_completed === undefined ? null : profile.profile_completed ? 1 : 0,
       )
       .first<any>();

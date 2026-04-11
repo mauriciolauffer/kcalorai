@@ -17,6 +17,7 @@ export interface UserProfile {
   gender: Gender | null;
   activity_level: ActivityLevel | null;
   goal: Goal | null;
+  timezone: string;
   profile_completed: boolean;
   updated_at: string;
 }
@@ -40,6 +41,7 @@ export interface SetupProfileRequest {
   gender: Gender;
   activity_level: ActivityLevel;
   goal: Goal;
+  timezone?: string;
 }
 
 export interface UserGoal {

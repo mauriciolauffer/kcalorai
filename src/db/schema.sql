@@ -17,10 +17,29 @@ CREATE TABLE user_profiles (
   gender TEXT,
   activity_level TEXT,
   goal TEXT,
+  timezone TEXT NOT NULL DEFAULT 'UTC',
   profile_completed INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE reminder_settings (
+  user_id TEXT PRIMARY KEY,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE reminders (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  time TEXT NOT NULL, -- HH:MM
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(user_id, time)
+);
+
+CREATE INDEX idx_reminders_user_id ON reminders (user_id);
 
 CREATE TABLE user_goals (
   id TEXT PRIMARY KEY,
