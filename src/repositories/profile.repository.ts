@@ -21,17 +21,18 @@ export class ProfileRepository {
     const result = await this.db
       .prepare(
         `INSERT INTO user_profiles (user_id, age, height_cm, weight_kg, gender, activity_level, goal, timezone, profile_completed)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, COALESCE(?8, 'UTC'), ?9)
          ON CONFLICT(user_id) DO UPDATE SET
-           age = COALESCE(excluded.age, user_profiles.age),
-           height_cm = COALESCE(excluded.height_cm, user_profiles.height_cm),
-           weight_kg = COALESCE(excluded.weight_kg, user_profiles.weight_kg),
-           gender = COALESCE(excluded.gender, user_profiles.gender),
-           activity_level = COALESCE(excluded.activity_level, user_profiles.activity_level),
-           goal = COALESCE(excluded.goal, user_profiles.goal),
-           timezone = COALESCE(excluded.timezone, user_profiles.timezone),
-           profile_completed = COALESCE(excluded.profile_completed, user_profiles.profile_completed),
+           age = COALESCE(?2, user_profiles.age),
+           height_cm = COALESCE(?3, user_profiles.height_cm),
+           weight_kg = COALESCE(?4, user_profiles.weight_kg),
+           gender = COALESCE(?5, user_profiles.gender),
+           activity_level = COALESCE(?6, user_profiles.activity_level),
+           goal = COALESCE(?7, user_profiles.goal),
+           timezone = COALESCE(?8, user_profiles.timezone),
+           profile_completed = COALESCE(?9, user_profiles.profile_completed),
            updated_at = datetime('now')
+         RETURNING *`,
          RETURNING *`,
       )
       .bind(
