@@ -10,10 +10,8 @@ export default {
     const reminderRepository = new ReminderRepository(env.DB);
     const reminderService = new ReminderService(reminderRepository);
 
-    // Current time in HH:MM format
-    const now = Temporal.Now.plainTimeISO();
-    const currentTime = `${String(now.hour).padStart(2, "0")}:${String(now.minute).padStart(2, "0")}`;
+    const now = Temporal.Now.zonedDateTimeISO("UTC");
 
-    ctx.waitUntil(reminderService.triggerReminders(currentTime));
+    ctx.waitUntil(reminderService.triggerReminders(now));
   },
 };

@@ -42,7 +42,7 @@ export class ProfileRepository {
         profile.gender ?? null,
         profile.activity_level ?? null,
         profile.goal ?? null,
-        profile.timezone ?? null,
+        profile.timezone ?? "UTC",
         profile.profile_completed === undefined ? null : profile.profile_completed ? 1 : 0,
       )
       .first<any>();

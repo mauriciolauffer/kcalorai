@@ -24,7 +24,7 @@ describe("Scheduled Handler", () => {
       scheduledTime: Date.now(),
       cron: "* * * * *",
       noWait: () => {},
-    };
+    } as any;
 
     await worker.scheduled(scheduledEvent, env, ctx);
 

@@ -23,7 +23,7 @@ export class FoodService {
   async updateLog(userId: string, logId: string, data: UpdateFoodLogRequest): Promise<FoodLog> {
     try {
       return await this.foodRepository.updateLog(logId, userId, data);
-    } catch (error) {
+    } catch {
       throw new NotFoundError("Food log not found");
     }
   }
