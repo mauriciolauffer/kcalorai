@@ -35,8 +35,11 @@ CREATE TABLE reminders (
   user_id TEXT NOT NULL,
   time TEXT NOT NULL, -- HH:MM
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(user_id, time)
 );
+
+CREATE INDEX idx_reminders_user_id ON reminders (user_id);
 
 CREATE TABLE user_goals (
   id TEXT PRIMARY KEY,
