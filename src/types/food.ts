@@ -69,6 +69,13 @@ export interface SearchFoodRequest {
   q?: string;
 }
 
+export interface CopyFoodLogRequest {
+  /**
+   * @format date
+   */
+  date?: string;
+}
+
 export interface NutritionalValues {
   calories: number;
   protein_g: number;

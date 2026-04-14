@@ -336,4 +336,79 @@ describe("Food Routes", () => {
       expect(res.status).toBe(400);
     });
   });
+
+  describe("POST /food/:id/copy", () => {
+    it("should copy a food log to today by default", async () => {
+      const logId = "log1";
+      const existingLog = {
+        id: logId,
+        name: "Apple",
+        calories: 95,
+        meal: "snack",
+        user_id: userId,
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+        servings: 1,
+        food_id: "f1",
+      };
+      const today = Temporal.Now.plainDateISO("UTC").toString();
+
+      db.first.mockResolvedValueOnce(existingLog); // For getLog
+      db.first.mockResolvedValueOnce({ ...existingLog, id: "log2", date: today }); // For createLog
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food[":id"].copy.$post({
+        param: { id: logId },
+        json: {},
+      });
+
+      expect(res.status).toBe(201);
+      const body = (await res.json()) as any;
+      expect(body.date).toBe(today);
+      expect(body.name).toBe("Apple");
+    });
+
+    it("should copy a food log to a specific date", async () => {
+      const logId = "log1";
+      const targetDate = "2023-12-25";
+      const existingLog = {
+        id: logId,
+        name: "Apple",
+        calories: 95,
+        meal: "snack",
+        user_id: userId,
+        food_id: "f1",
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+        servings: 1,
+      };
+
+      db.first.mockResolvedValueOnce(existingLog);
+      db.first.mockResolvedValueOnce({ ...existingLog, id: "log2", date: targetDate });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food[":id"].copy.$post({
+        param: { id: logId },
+        json: { date: targetDate },
+      });
+
+      expect(res.status).toBe(201);
+      const body = (await res.json()) as any;
+      expect(body.date).toBe(targetDate);
+    });
+
+    it("should return 404 if log to copy does not exist", async () => {
+      db.first.mockResolvedValue(null);
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food[":id"].copy.$post({
+        param: { id: "nonexistent" },
+        json: {},
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
 });
