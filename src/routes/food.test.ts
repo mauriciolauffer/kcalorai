@@ -235,7 +235,9 @@ describe("Food Routes", () => {
 
     it("should allow remaining calories to be negative when goal is exceeded", async () => {
       const date = "2023-10-27";
-      const logs = [{ id: "log1", meal: "lunch", calories: 2500, protein_g: 0, fat_g: 0, carbs_g: 0 }];
+      const logs = [
+        { id: "log1", meal: "lunch", calories: 2500, protein_g: 0, fat_g: 0, carbs_g: 0 },
+      ];
       const goal = { daily_calories: 2000, protein_g: 150, fat_g: 70, carbs_g: 200 };
 
       db.all.mockResolvedValue({ results: logs });

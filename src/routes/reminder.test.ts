@@ -49,7 +49,7 @@ describe("Reminder Routes", () => {
     const res = await client.reminders.$get();
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.settings.enabled).toBe(true);
     expect(body.reminders).toHaveLength(1);
   });
@@ -61,15 +61,15 @@ describe("Reminder Routes", () => {
     const res = await client.reminders.settings.$patch({ json: { enabled: false } });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.enabled).toBe(false);
   });
 
   it("POST /reminders should add a new reminder", async () => {
     db.all.mockResolvedValue({ results: [] }); // No existing
     db.first.mockImplementation(async () => {
-        // Return something generic that won't break
-        return { id: "new-id", user_id: userId, time: "10:00", enabled: 1 };
+      // Return something generic that won't break
+      return { id: "new-id", user_id: userId, time: "10:00", enabled: 1 };
     });
 
     const client = testClient(app, { ...env, DB: db } as any);

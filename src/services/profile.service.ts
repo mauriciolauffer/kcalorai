@@ -47,22 +47,12 @@ export class ProfileService {
   }
 
   async updateGoal(userId: string, data: UpdateGoalRequest): Promise<ProfileResponse> {
-    const daily_calories = data.daily_calories;
-    let macros: { protein_g: number; fat_g: number; carbs_g: number };
+    const { daily_calories, protein_g, fat_g, carbs_g } = data;
 
-    if (
-      data.protein_g !== undefined &&
-      data.fat_g !== undefined &&
-      data.carbs_g !== undefined
-    ) {
-      macros = {
-        protein_g: data.protein_g,
-        fat_g: data.fat_g,
-        carbs_g: data.carbs_g,
-      };
-    } else {
-      macros = this.calculateDefaultMacros(daily_calories);
-    }
+    const macros =
+      protein_g !== undefined && fat_g !== undefined && carbs_g !== undefined
+        ? { protein_g, fat_g, carbs_g }
+        : this.calculateDefaultMacros(daily_calories);
 
     const effective_from = data.effective_from ?? Temporal.Now.plainDateISO("UTC").toString();
 

@@ -76,7 +76,7 @@ describe("SummaryService", () => {
 
       expect(summary.days).toHaveLength(7);
       expect(summary.average.calories).toBe(0);
-      expect(summary.days.every(d => d.calories === 0)).toBe(true);
+      expect(summary.days.every((d) => d.calories === 0)).toBe(true);
     });
 
     it("should handle month boundaries correctly", async () => {
