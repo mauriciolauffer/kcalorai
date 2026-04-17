@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill";
 import { FoodRepository } from "../repositories/food.repository";
 import { LogMealRequest, UpdateFoodLogRequest, FoodLog, Food } from "../types/food";
 import { NotFoundError } from "../types/errors";
@@ -49,5 +50,27 @@ export class FoodService {
       throw new NotFoundError("Food item not found");
     }
     return food;
+  }
+
+  async copyLog(userId: string, logId: string, date?: string): Promise<FoodLog> {
+    const log = await this.foodRepository.getLog(logId, userId);
+    if (!log) {
+      throw new NotFoundError("Food log not found");
+    }
+
+    const targetDate = date || Temporal.Now.plainDateISO("UTC").toString();
+
+    return this.foodRepository.createLog({
+      user_id: userId,
+      food_id: log.food_id,
+      name: log.name,
+      date: targetDate,
+      meal: log.meal,
+      servings: log.servings,
+      calories: log.calories,
+      protein_g: log.protein_g,
+      fat_g: log.fat_g,
+      carbs_g: log.carbs_g,
+    });
   }
 }

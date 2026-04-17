@@ -9,6 +9,7 @@ import {
   SearchFoodRequest,
   SummaryQuery,
   WeeklySummaryQuery,
+  CopyFoodLogRequest,
 } from "../types/food";
 import { FoodRepository } from "../repositories/food.repository";
 import { FoodService } from "../services/food.service";
@@ -22,6 +23,7 @@ const validateUpdateLog = typia.createValidate<UpdateFoodLogRequest>();
 const validateSearchFood = typia.createValidate<SearchFoodRequest>();
 const validateSummaryQuery = typia.createValidate<SummaryQuery>();
 const validateWeeklySummaryQuery = typia.createValidate<WeeklySummaryQuery>();
+const validateCopyLog = typia.createValidate<CopyFoodLogRequest>();
 
 const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
@@ -139,7 +141,25 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
     const item = await service.getFoodById(id, userId);
     return c.json(item);
-  });
+  })
+  .post(
+    "/:id/copy",
+    typiaValidator("json", validateCopyLog, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const logId = c.req.param("id");
+      const { date } = c.req.valid("json");
+      const repository = new FoodRepository(c.env.DB);
+      const service = new FoodService(repository);
+
+      const log = await service.copyLog(userId, logId, date);
+      return c.json(log, 201);
+    },
+  );
 
 export default food;
 export type FoodApp = typeof food;

@@ -12,6 +12,7 @@ describe("FoodService", () => {
       createLog: vi.fn(),
       updateLog: vi.fn(),
       deleteLog: vi.fn(),
+      getLog: vi.fn(),
       getLogsByDate: vi.fn(),
       searchFoods: vi.fn(),
       getFoodById: vi.fn(),
@@ -104,5 +105,47 @@ describe("FoodService", () => {
   it("should throw NotFoundError if food not found by id", async () => {
     repository.getFoodById.mockResolvedValue(null);
     await expect(service.getFoodById("nonexistent", "user1")).rejects.toThrow(NotFoundError);
+  });
+
+  describe("copyLog", () => {
+    it("should copy a log to a new date", async () => {
+      const userId = "user1";
+      const logId = "log1";
+      const existingLog = {
+        id: logId,
+        user_id: userId,
+        name: "Apple",
+        calories: 95,
+        date: "2023-10-27",
+        meal: "snack",
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+        servings: 1,
+        food_id: "f1",
+      };
+      const newDate = "2023-10-28";
+
+      repository.getLog.mockResolvedValue(existingLog);
+      repository.createLog.mockImplementation((data: any) => Promise.resolve({ id: "log2", ...data }));
+
+      const result = await service.copyLog(userId, logId, newDate);
+
+      expect(repository.getLog).toHaveBeenCalledWith(logId, userId);
+      expect(repository.createLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          date: newDate,
+          name: "Apple",
+          calories: 95,
+        }),
+      );
+      expect(result.id).toBe("log2");
+      expect(result.date).toBe(newDate);
+    });
+
+    it("should throw NotFoundError if log to copy is not found", async () => {
+      repository.getLog.mockResolvedValue(null);
+      await expect(service.copyLog("u1", "l1")).rejects.toThrow(NotFoundError);
+    });
   });
 });
