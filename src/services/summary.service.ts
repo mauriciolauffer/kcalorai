@@ -20,23 +20,25 @@ export class SummaryService {
     const logs = await this.foodRepository.getLogsByDate(userId, date);
     const goal = await this.profileRepository.getGoalByDate(userId, date);
 
+    const round = (val: number) => Math.round(val * 10) / 10;
+
     const mealTypes: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
     const mealSummaries: MealSummary[] = mealTypes.map((meal) => {
       const mealLogs = logs.filter((log) => log.meal === meal);
       return {
         meal,
         calories: mealLogs.reduce((acc, log) => acc + log.calories, 0),
-        protein_g: mealLogs.reduce((acc, log) => acc + log.protein_g, 0),
-        fat_g: mealLogs.reduce((acc, log) => acc + log.fat_g, 0),
-        carbs_g: mealLogs.reduce((acc, log) => acc + log.carbs_g, 0),
+        protein_g: round(mealLogs.reduce((acc, log) => acc + log.protein_g, 0)),
+        fat_g: round(mealLogs.reduce((acc, log) => acc + log.fat_g, 0)),
+        carbs_g: round(mealLogs.reduce((acc, log) => acc + log.carbs_g, 0)),
       };
     });
 
     const consumed: NutritionalValues = {
       calories: mealSummaries.reduce((acc, meal) => acc + meal.calories, 0),
-      protein_g: mealSummaries.reduce((acc, meal) => acc + meal.protein_g, 0),
-      fat_g: mealSummaries.reduce((acc, meal) => acc + meal.fat_g, 0),
-      carbs_g: mealSummaries.reduce((acc, meal) => acc + meal.carbs_g, 0),
+      protein_g: round(mealSummaries.reduce((acc, meal) => acc + meal.protein_g, 0)),
+      fat_g: round(mealSummaries.reduce((acc, meal) => acc + meal.fat_g, 0)),
+      carbs_g: round(mealSummaries.reduce((acc, meal) => acc + meal.carbs_g, 0)),
     };
 
     let target: NutritionalValues | null = null;
@@ -52,9 +54,9 @@ export class SummaryService {
 
       remaining = {
         calories: target.calories - consumed.calories,
-        protein_g: target.protein_g - consumed.protein_g,
-        fat_g: target.fat_g - consumed.fat_g,
-        carbs_g: target.carbs_g - consumed.carbs_g,
+        protein_g: round(target.protein_g - consumed.protein_g),
+        fat_g: round(target.fat_g - consumed.fat_g),
+        carbs_g: round(target.carbs_g - consumed.carbs_g),
       };
     }
 
