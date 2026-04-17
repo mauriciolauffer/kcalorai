@@ -4,7 +4,7 @@ export class FoodRepository {
   constructor(private db: D1Database) {}
 
   private getUpsertStatement(
-    log: Omit<FoodLog, "created_at" | "updated_at"> & { id?: string },
+    log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string },
     id: string,
   ): D1PreparedStatement {
     const now = new Date().toISOString();
@@ -42,7 +42,7 @@ export class FoodRepository {
       );
   }
 
-  async createLog(log: Omit<FoodLog, "created_at" | "updated_at"> & { id?: string }): Promise<FoodLog> {
+  async createLog(log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string }): Promise<FoodLog> {
     const id = log.id || crypto.randomUUID();
     const result = await this.getUpsertStatement(log, id).first<FoodLog>();
 
@@ -53,7 +53,7 @@ export class FoodRepository {
   }
 
   async upsertLogs(
-    logs: (Omit<FoodLog, "created_at" | "updated_at"> & { id?: string })[],
+    logs: (Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string })[],
   ): Promise<FoodLog[]> {
     if (logs.length === 0) return [];
 
