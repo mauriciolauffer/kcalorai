@@ -63,7 +63,7 @@ export class FoodRepository {
     });
 
     const results = await this.db.batch<FoodLog>(statements);
-    return results.flatMap((r) => r.results || []);
+    return results.map((r) => r.results![0]).filter(Boolean);
   }
 
   async updateLog(id: string, userId: string, log: Partial<FoodLog>): Promise<FoodLog> {
@@ -110,6 +110,17 @@ export class FoodRepository {
     return result.meta.changes > 0;
   }
 
+  async deleteLogs(ids: string[], userId: string): Promise<string[]> {
+    if (ids.length === 0) return [];
+
+    const statements = ids.map((id) =>
+      this.db.prepare("DELETE FROM food_logs WHERE id = ? AND user_id = ?").bind(id, userId),
+    );
+
+    const results = await this.db.batch(statements);
+    return ids.filter((id, index) => results[index].meta.changes > 0);
+  }
+
   async getLog(id: string, userId: string): Promise<FoodLog | null> {
     return this.db
       .prepare("SELECT * FROM food_logs WHERE id = ? AND user_id = ?")
@@ -137,7 +148,7 @@ export class FoodRepository {
 
   async getLogsSince(userId: string, since: string): Promise<FoodLog[]> {
     const result = await this.db
-      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC, id ASC")
+      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC")
       .bind(userId, since)
       .all<FoodLog>();
     return result.results;

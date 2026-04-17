@@ -454,11 +454,12 @@ describe("Food Routes", () => {
         deleted_ids: ["d1"],
       };
 
-      db.batch.mockResolvedValue([
-        { results: [{ id: "u1", name: "Apple", user_id: userId }] },
-        { results: [{ id: "u2", name: "Banana", user_id: userId }] },
-      ]);
-      db.run.mockResolvedValue({ meta: { changes: 1 } });
+      db.batch
+        .mockResolvedValueOnce([
+          { results: [{ id: "u1", name: "Apple", user_id: userId }] },
+          { results: [{ id: "u2", name: "Banana", user_id: userId }] },
+        ])
+        .mockResolvedValueOnce([{ meta: { changes: 1 } }]);
 
       const client = testClient(app, { ...env, DB: db } as any);
       const res = await client.food.sync.$post({ json: syncData as any });
