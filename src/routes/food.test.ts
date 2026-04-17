@@ -31,6 +31,7 @@ describe("Food Routes", () => {
       first: vi.fn(),
       run: vi.fn(),
       all: vi.fn(),
+      batch: vi.fn(),
     };
 
     vi.mocked(getAuth).mockReturnValue({
@@ -409,6 +410,136 @@ describe("Food Routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("Sync Endpoints", () => {
+    it("POST /food should support client-generated IDs for idempotency", async () => {
+      const logData = {
+        id: "client-id-1",
+        name: "Apple",
+        calories: 95,
+        date: "2023-10-27",
+        meal: "snack",
+      };
+      db.first.mockResolvedValue({ ...logData, user_id: userId });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.$post({ json: logData as any });
+
+      expect(res.status).toBe(201);
+      expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("ON CONFLICT(id) DO UPDATE"));
+      expect(db.bind).toHaveBeenCalledWith(
+        "client-id-1",
+        userId,
+        null,
+        "Apple",
+        "2023-10-27",
+        "snack",
+        null,
+        95,
+        0,
+        0,
+        0,
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+      );
+    });
+
+    it("POST /food/sync should handle bulk upserts and deletions", async () => {
+      const syncData = {
+        upserts: [
+          { id: "u1", name: "Apple", calories: 95, date: "2023-10-27", meal: "snack" },
+          { id: "u2", name: "Banana", calories: 105, date: "2023-10-27", meal: "snack" },
+        ],
+        deleted_ids: ["d1"],
+      };
+
+      db.batch
+        .mockResolvedValueOnce([
+          { results: [{ id: "u1", name: "Apple", user_id: userId }] },
+          { results: [{ id: "u2", name: "Banana", user_id: userId }] },
+        ])
+        .mockResolvedValueOnce([{ meta: { changes: 1 } }]);
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.sync.$post({ json: syncData as any });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.upserted).toHaveLength(2);
+      expect(body.deleted_ids).toEqual(["d1"]);
+      expect(db.batch).toHaveBeenCalled();
+    });
+
+    it("GET /food/sync should return logs updated since a timestamp", async () => {
+      const since = "2023-10-27T10:00:00Z";
+      const logs = [{ id: "log1", name: "Apple", updated_at: "2023-10-27T11:00:00Z" }];
+      db.all.mockResolvedValue({ results: logs });
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.sync.$get({ query: { since } });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.logs).toEqual(logs);
+      expect(db.bind).toHaveBeenCalledWith(userId, since);
+    });
+
+    it("should allow data sync across 'devices' (sessions) for the same user (AC2)", async () => {
+      // Mock session 1
+      vi.mocked(getAuth).mockReturnValueOnce({
+        api: {
+          getSession: vi.fn().mockResolvedValue({
+            user: { id: userId, email: "test@example.com", name: "Test" },
+            session: { id: "session-1" },
+          }),
+        },
+      } as any);
+
+      const logData = { name: "Apple", calories: 95, date: "2023-10-27", meal: "snack" as const };
+      db.first.mockResolvedValueOnce({ id: "log1", ...logData, user_id: userId });
+
+      const client1 = testClient(app, { ...env, DB: db } as any);
+      await client1.food.$post({ json: logData });
+
+      // Mock session 2 (different session ID, same user ID)
+      vi.mocked(getAuth).mockReturnValueOnce({
+        api: {
+          getSession: vi.fn().mockResolvedValue({
+            user: { id: userId, email: "test@example.com", name: "Test" },
+            session: { id: "session-2" },
+          }),
+        },
+      } as any);
+
+      const logs = [{ id: "log1", ...logData }];
+      db.all.mockResolvedValueOnce({ results: logs });
+
+      const client2 = testClient(app, { ...env, DB: db } as any);
+      const res = await client2.food.$get({ query: { date: "2023-10-27" } });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as any;
+      expect(body.logs).toEqual(logs);
+      // This confirms that regardless of session ID, as long as user ID is the same, they see the same data.
+    });
+
+    it("POST /food should fail if user tries to overwrite a log owned by someone else", async () => {
+      const logData = {
+        id: "existing-log-id",
+        name: "Malicious Update",
+        calories: 100,
+        date: "2023-10-27",
+        meal: "snack" as const,
+      };
+
+      // Mock DB returning null because of the WHERE clause check in UPSERT
+      db.first.mockResolvedValue(null);
+
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.$post({ json: logData });
+
+      expect(res.status).toBe(500); // Because FoodService throws when repository returns null
     });
   });
 });

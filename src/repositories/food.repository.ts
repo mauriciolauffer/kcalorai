@@ -3,12 +3,27 @@ import { FoodLog, Food } from "../types/food";
 export class FoodRepository {
   constructor(private db: D1Database) {}
 
-  async createLog(log: Omit<FoodLog, "id" | "created_at" | "updated_at">): Promise<FoodLog> {
-    const id = crypto.randomUUID();
-    const result = await this.db
+  private getUpsertStatement(
+    log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string },
+    id: string,
+  ): D1PreparedStatement {
+    const now = new Date().toISOString();
+    return this.db
       .prepare(
-        `INSERT INTO food_logs (id, user_id, food_id, name, date, meal, servings, calories, protein_g, fat_g, carbs_g)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO food_logs (id, user_id, food_id, name, date, meal, servings, calories, protein_g, fat_g, carbs_g, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           food_id = excluded.food_id,
+           name = excluded.name,
+           date = excluded.date,
+           meal = excluded.meal,
+           servings = excluded.servings,
+           calories = excluded.calories,
+           protein_g = excluded.protein_g,
+           fat_g = excluded.fat_g,
+           carbs_g = excluded.carbs_g,
+           updated_at = excluded.updated_at
+         WHERE food_logs.user_id = excluded.user_id
          RETURNING *`,
       )
       .bind(
@@ -23,16 +38,36 @@ export class FoodRepository {
         log.protein_g,
         log.fat_g,
         log.carbs_g,
-      )
-      .first<FoodLog>();
+        now,
+      );
+  }
+
+  async createLog(log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string }): Promise<FoodLog> {
+    const id = log.id || crypto.randomUUID();
+    const result = await this.getUpsertStatement(log, id).first<FoodLog>();
 
     if (!result) {
-      throw new Error("Failed to create food log");
+      throw new Error("Failed to create food log (possibly due to user_id mismatch on existing ID)");
     }
     return result;
   }
 
+  async upsertLogs(
+    logs: (Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string })[],
+  ): Promise<FoodLog[]> {
+    if (logs.length === 0) return [];
+
+    const statements = logs.map((log) => {
+      const id = log.id || crypto.randomUUID();
+      return this.getUpsertStatement(log, id);
+    });
+
+    const results = await this.db.batch<FoodLog>(statements);
+    return results.map((r) => r.results![0]).filter(Boolean);
+  }
+
   async updateLog(id: string, userId: string, log: Partial<FoodLog>): Promise<FoodLog> {
+    const now = new Date().toISOString();
     const result = await this.db
       .prepare(
         `UPDATE food_logs SET
@@ -43,7 +78,7 @@ export class FoodRepository {
            fat_g = COALESCE(?, fat_g),
            carbs_g = COALESCE(?, carbs_g),
            servings = COALESCE(?, servings),
-           updated_at = datetime('now')
+           updated_at = ?
          WHERE id = ? AND user_id = ?
          RETURNING *`,
       )
@@ -55,6 +90,7 @@ export class FoodRepository {
         log.fat_g ?? null,
         log.carbs_g ?? null,
         log.servings ?? null,
+        now,
         id,
         userId,
       )
@@ -72,6 +108,17 @@ export class FoodRepository {
       .bind(id, userId)
       .run();
     return result.meta.changes > 0;
+  }
+
+  async deleteLogs(ids: string[], userId: string): Promise<string[]> {
+    if (ids.length === 0) return [];
+
+    const statements = ids.map((id) =>
+      this.db.prepare("DELETE FROM food_logs WHERE id = ? AND user_id = ?").bind(id, userId),
+    );
+
+    const results = await this.db.batch(statements);
+    return ids.filter((id, index) => results[index].meta.changes > 0);
   }
 
   async getLog(id: string, userId: string): Promise<FoodLog | null> {
@@ -95,6 +142,14 @@ export class FoodRepository {
         "SELECT * FROM food_logs WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY date ASC, created_at ASC",
       )
       .bind(userId, startDate, endDate)
+      .all<FoodLog>();
+    return result.results;
+  }
+
+  async getLogsSince(userId: string, since: string): Promise<FoodLog[]> {
+    const result = await this.db
+      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC")
+      .bind(userId, since)
       .all<FoodLog>();
     return result.results;
   }
