@@ -137,7 +137,7 @@ export class FoodRepository {
 
   async getLogsSince(userId: string, since: string): Promise<FoodLog[]> {
     const result = await this.db
-      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC")
+      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC, id ASC")
       .bind(userId, since)
       .all<FoodLog>();
     return result.results;
