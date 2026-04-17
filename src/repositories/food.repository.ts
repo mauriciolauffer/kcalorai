@@ -63,7 +63,7 @@ export class FoodRepository {
     });
 
     const results = await this.db.batch<FoodLog>(statements);
-    return results.map((r) => r.results![0]).filter(Boolean);
+    return results.flatMap((r) => r.results || []);
   }
 
   async updateLog(id: string, userId: string, log: Partial<FoodLog>): Promise<FoodLog> {
