@@ -10,6 +10,8 @@ import {
   SummaryQuery,
   WeeklySummaryQuery,
   CopyFoodLogRequest,
+  SyncFoodLogsRequest,
+  SyncQuery,
 } from "../types/food";
 import { FoodRepository } from "../repositories/food.repository";
 import { FoodService } from "../services/food.service";
@@ -24,6 +26,8 @@ const validateSearchFood = typia.createValidate<SearchFoodRequest>();
 const validateSummaryQuery = typia.createValidate<SummaryQuery>();
 const validateWeeklySummaryQuery = typia.createValidate<WeeklySummaryQuery>();
 const validateCopyLog = typia.createValidate<CopyFoodLogRequest>();
+const validateSyncRequest = typia.createValidate<SyncFoodLogsRequest>();
+const validateSyncQuery = typia.createValidate<SyncQuery>();
 
 const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
   .use("*", authMiddleware)
@@ -158,6 +162,40 @@ const food = new Hono<{ Bindings: Env; Variables: AuthVariables }>()
 
       const log = await service.copyLog(userId, logId, date);
       return c.json(log, 201);
+    },
+  )
+  .post(
+    "/sync",
+    typiaValidator("json", validateSyncRequest, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const data = c.req.valid("json");
+      const repository = new FoodRepository(c.env.DB);
+      const service = new FoodService(repository);
+
+      const result = await service.sync(userId, data);
+      return c.json(result);
+    },
+  )
+  .get(
+    "/sync",
+    typiaValidator("query", validateSyncQuery, (result) => {
+      if (!result.success) {
+        throw new ValidationError("Validation failed", result.errors);
+      }
+    }),
+    async (c) => {
+      const userId = getUserId(c);
+      const since = c.req.valid("query").since || new Date(0).toISOString();
+      const repository = new FoodRepository(c.env.DB);
+      const service = new FoodService(repository);
+
+      const logs = await service.getLogsSince(userId, since);
+      return c.json({ logs });
     },
   );
 

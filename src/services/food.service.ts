@@ -1,6 +1,13 @@
 import { Temporal } from "temporal-polyfill";
 import { FoodRepository } from "../repositories/food.repository";
-import { LogMealRequest, UpdateFoodLogRequest, FoodLog, Food } from "../types/food";
+import {
+  LogMealRequest,
+  UpdateFoodLogRequest,
+  FoodLog,
+  Food,
+  SyncFoodLogsRequest,
+  SyncFoodLogsResponse,
+} from "../types/food";
 import { NotFoundError } from "../types/errors";
 
 export class FoodService {
@@ -8,6 +15,7 @@ export class FoodService {
 
   async logMeal(userId: string, data: LogMealRequest): Promise<FoodLog> {
     return this.foodRepository.createLog({
+      id: data.id,
       user_id: userId,
       food_id: data.food_id ?? null,
       name: data.name?.trim() || "Quick Add",
@@ -38,6 +46,38 @@ export class FoodService {
 
   async getDailyLogs(userId: string, date: string): Promise<FoodLog[]> {
     return this.foodRepository.getLogsByDate(userId, date);
+  }
+
+  async getLogsSince(userId: string, since: string): Promise<FoodLog[]> {
+    return this.foodRepository.getLogsSince(userId, since);
+  }
+
+  async sync(userId: string, data: SyncFoodLogsRequest): Promise<SyncFoodLogsResponse> {
+    const upserted = await this.foodRepository.upsertLogs(
+      data.upserts.map((u) => ({
+        id: u.id,
+        user_id: userId,
+        food_id: u.food_id ?? null,
+        name: u.name?.trim() || "Quick Add",
+        date: u.date,
+        meal: u.meal,
+        servings: u.servings ?? null,
+        calories: u.calories,
+        protein_g: u.protein_g ?? 0,
+        fat_g: u.fat_g ?? 0,
+        carbs_g: u.carbs_g ?? 0,
+      })),
+    );
+
+    const deleted_ids: string[] = [];
+    for (const id of data.deleted_ids) {
+      const success = await this.foodRepository.deleteLog(id, userId);
+      if (success) {
+        deleted_ids.push(id);
+      }
+    }
+
+    return { upserted, deleted_ids };
   }
 
   async searchFoods(query: string, userId: string): Promise<Food[]> {

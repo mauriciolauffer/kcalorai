@@ -29,6 +29,7 @@ export interface FoodLog {
 }
 
 export interface LogMealRequest {
+  id?: string;
   /**
    * @format date
    */
@@ -116,4 +117,18 @@ export interface WeeklySummaryQuery {
    * @format date
    */
   endDate?: string;
+}
+
+export interface SyncFoodLogsRequest {
+  upserts: LogMealRequest[];
+  deleted_ids: string[];
+}
+
+export interface SyncFoodLogsResponse {
+  upserted: FoodLog[];
+  deleted_ids: string[];
+}
+
+export interface SyncQuery {
+  since?: string; // ISO timestamp
 }
