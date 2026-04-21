@@ -20,20 +20,25 @@ export class SummaryService {
     const logs = await this.foodRepository.getLogsByDate(userId, date);
     const goal = await this.profileRepository.getGoalByDate(userId, date);
 
+    const round = (val: number) => Math.round(val * 10) / 10;
+
     const mealTypes: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
     const mealSummaries: MealSummary[] = mealTypes.map((meal) => {
       const mealLogs = logs.filter((log) => log.meal === meal);
       return {
         meal,
         calories: mealLogs.reduce((acc, log) => acc + log.calories, 0),
-        protein_g: this.round(mealLogs.reduce((acc, log) => acc + log.protein_g, 0)),
-        fat_g: this.round(mealLogs.reduce((acc, log) => acc + log.fat_g, 0)),
-        carbs_g: this.round(mealLogs.reduce((acc, log) => acc + log.carbs_g, 0)),
+        protein_g: round(mealLogs.reduce((acc, log) => acc + log.protein_g, 0)),
+        fat_g: round(mealLogs.reduce((acc, log) => acc + log.fat_g, 0)),
+        carbs_g: round(mealLogs.reduce((acc, log) => acc + log.carbs_g, 0)),
+      };
+    });
+
     const consumed: NutritionalValues = {
-      calories: logs.reduce((acc, log) => acc + log.calories, 0),
-      protein_g: round(logs.reduce((acc, log) => acc + log.protein_g, 0)),
-      fat_g: round(logs.reduce((acc, log) => acc + log.fat_g, 0)),
-      carbs_g: round(logs.reduce((acc, log) => acc + log.carbs_g, 0)),
+      calories: mealSummaries.reduce((acc, meal) => acc + meal.calories, 0),
+      protein_g: round(mealSummaries.reduce((acc, meal) => acc + meal.protein_g, 0)),
+      fat_g: round(mealSummaries.reduce((acc, meal) => acc + meal.fat_g, 0)),
+      carbs_g: round(mealSummaries.reduce((acc, meal) => acc + meal.carbs_g, 0)),
     };
 
     let target: NutritionalValues | null = null;
@@ -49,9 +54,9 @@ export class SummaryService {
 
       remaining = {
         calories: target.calories - consumed.calories,
-        protein_g: this.round(target.protein_g - consumed.protein_g),
-        fat_g: this.round(target.fat_g - consumed.fat_g),
-        carbs_g: this.round(target.carbs_g - consumed.carbs_g),
+        protein_g: round(target.protein_g - consumed.protein_g),
+        fat_g: round(target.fat_g - consumed.fat_g),
+        carbs_g: round(target.carbs_g - consumed.carbs_g),
       };
     }
 
@@ -72,6 +77,8 @@ export class SummaryService {
 
     const logs = await this.foodRepository.getLogsByDateRange(userId, startDateStr, endDate);
 
+    const round = (val: number) => Math.round(val * 10) / 10;
+
     const days: DailyTrend[] = [];
     for (let i = 0; i < 7; i++) {
       const current = start.add({ days: i });
@@ -81,26 +88,22 @@ export class SummaryService {
       days.push({
         date: dateStr,
         calories: dayLogs.reduce((acc, log) => acc + log.calories, 0),
-        protein_g: this.round(dayLogs.reduce((acc, log) => acc + log.protein_g, 0)),
-        fat_g: this.round(dayLogs.reduce((acc, log) => acc + log.fat_g, 0)),
-        carbs_g: this.round(dayLogs.reduce((acc, log) => acc + log.carbs_g, 0)),
+        protein_g: round(dayLogs.reduce((acc, log) => acc + log.protein_g, 0)),
+        fat_g: round(dayLogs.reduce((acc, log) => acc + log.fat_g, 0)),
+        carbs_g: round(dayLogs.reduce((acc, log) => acc + log.carbs_g, 0)),
       });
     }
 
     const average: NutritionalValues = {
       calories: Math.round(days.reduce((acc, day) => acc + day.calories, 0) / 7),
-      protein_g: this.round(days.reduce((acc, day) => acc + day.protein_g, 0) / 7),
-      fat_g: this.round(days.reduce((acc, day) => acc + day.fat_g, 0) / 7),
-      carbs_g: this.round(days.reduce((acc, day) => acc + day.carbs_g, 0) / 7),
+      protein_g: round(days.reduce((acc, day) => acc + day.protein_g, 0) / 7),
+      fat_g: round(days.reduce((acc, day) => acc + day.fat_g, 0) / 7),
+      carbs_g: round(days.reduce((acc, day) => acc + day.carbs_g, 0) / 7),
     };
 
     return {
       days,
       average,
     };
-  }
-
-  private round(val: number): number {
-    return Math.round(val * 10) / 10;
   }
 }
