@@ -15,6 +15,110 @@ describe("SummaryService", () => {
 
   const summaryService = new SummaryService(mockFoodRepository, mockProfileRepository);
 
+  describe("getDailySummary", () => {
+    it("should aggregate calories and macros for a daily summary", async () => {
+      const userId = "user-1";
+      const date = "2024-01-01";
+      const logs = [
+        {
+          meal: "breakfast",
+          calories: 300,
+          protein_g: 20.5,
+          fat_g: 10.1,
+          carbs_g: 30.2,
+        },
+        {
+          meal: "lunch",
+          calories: 500,
+          protein_g: 30.4,
+          fat_g: 15.2,
+          carbs_g: 60.3,
+        },
+      ];
+      const goal = {
+        daily_calories: 2000,
+        protein_g: 150,
+        fat_g: 70,
+        carbs_g: 200,
+      };
+
+      vi.mocked(mockFoodRepository.getLogsByDate).mockResolvedValue(logs as any);
+      vi.mocked(mockProfileRepository.getGoalByDate).mockResolvedValue(goal as any);
+
+      const summary = await summaryService.getDailySummary(userId, date);
+
+      expect(summary.date).toBe(date);
+      // Aggregated consumed:
+      // protein: 20.5 + 30.4 = 50.9
+      // fat: 10.1 + 15.2 = 25.3
+      // carbs: 30.2 + 60.3 = 90.5
+      expect(summary.consumed.calories).toBe(800);
+      expect(summary.consumed.protein_g).toBe(50.9);
+      expect(summary.consumed.fat_g).toBe(25.3);
+      expect(summary.consumed.carbs_g).toBe(90.5);
+
+      // Goal:
+      expect(summary.goal).toEqual({
+        calories: 2000,
+        protein_g: 150,
+        fat_g: 70,
+        carbs_g: 200,
+      });
+
+      // Remaining:
+      // protein: 150 - 50.9 = 99.1
+      expect(summary.remaining?.protein_g).toBe(99.1);
+      expect(summary.remaining?.calories).toBe(1200);
+
+      // Meals check:
+      const breakfast = summary.meals.find((m) => m.meal === "breakfast");
+      expect(breakfast?.protein_g).toBe(20.5);
+    });
+
+    it("should round aggregated macros to 1 decimal place", async () => {
+      const userId = "user-1";
+      const date = "2024-01-01";
+      const logs = [
+        {
+          meal: "snack",
+          calories: 100,
+          protein_g: 1.11,
+          fat_g: 1.11,
+          carbs_g: 1.11,
+        },
+        {
+          meal: "snack",
+          calories: 100,
+          protein_g: 2.22,
+          fat_g: 2.22,
+          carbs_g: 2.22,
+        },
+      ];
+
+      vi.mocked(mockFoodRepository.getLogsByDate).mockResolvedValue(logs as any);
+      vi.mocked(mockProfileRepository.getGoalByDate).mockResolvedValue(null);
+
+      const summary = await summaryService.getDailySummary(userId, date);
+
+      // 1.11 + 2.22 = 3.33 -> 3.3
+      expect(summary.consumed.protein_g).toBe(3.3);
+      expect(summary.meals.find((m) => m.meal === "snack")?.protein_g).toBe(3.3);
+    });
+
+    it("should handle days with no logs and no goal", async () => {
+      vi.mocked(mockFoodRepository.getLogsByDate).mockResolvedValue([]);
+      vi.mocked(mockProfileRepository.getGoalByDate).mockResolvedValue(null);
+
+      const summary = await summaryService.getDailySummary("user-1", "2024-01-01");
+
+      expect(summary.consumed.calories).toBe(0);
+      expect(summary.consumed.protein_g).toBe(0);
+      expect(summary.goal).toBeNull();
+      expect(summary.remaining).toBeNull();
+      expect(summary.meals.every((m) => m.calories === 0)).toBe(true);
+    });
+  });
+
   describe("getWeeklySummary", () => {
     it("should calculate weekly averages and daily trends", async () => {
       const userId = "user-1";

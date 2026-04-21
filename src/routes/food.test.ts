@@ -213,10 +213,19 @@ describe("Food Routes", () => {
       expect(body.date).toBe(date);
       expect(body.consumed.calories).toBe(800);
       expect(body.consumed.protein_g).toBe(50);
+      expect(body.consumed.fat_g).toBe(25);
+      expect(body.consumed.carbs_g).toBe(90);
       expect(body.goal.calories).toBe(2000);
+      expect(body.goal.protein_g).toBe(150);
+      expect(body.goal.fat_g).toBe(70);
+      expect(body.goal.carbs_g).toBe(200);
       expect(body.remaining.calories).toBe(1200);
+      expect(body.remaining.protein_g).toBe(100);
+      expect(body.remaining.fat_g).toBe(45);
+      expect(body.remaining.carbs_g).toBe(110);
       expect(body.meals).toHaveLength(4);
       expect(body.meals.find((m: any) => m.meal === "breakfast").calories).toBe(300);
+      expect(body.meals.find((m: any) => m.meal === "breakfast").protein_g).toBe(20);
     });
 
     it("should handle summary when no goal is set", async () => {
