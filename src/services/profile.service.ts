@@ -91,11 +91,24 @@ export class ProfileService {
     return Math.max(1200, Math.round(tdee)); // Minimum 1200 kcal for safety
   }
 
+  /**
+   * Calculates default macronutrient targets based on a calorie goal.
+   * Uses a standard split: 30% Protein, 30% Fat, 40% Carbs.
+   *
+   * Energy values used for calculation:
+   * - Protein: 4 kcal/g
+   * - Fat: 9 kcal/g
+   * - Carbs: 4 kcal/g
+   *
+   * @param calories The daily calorie goal.
+   * @returns An object containing default protein, fat, and carb targets in grams.
+   */
   private calculateDefaultMacros(calories: number): {
     protein_g: number;
     fat_g: number;
     carbs_g: number;
   } {
+    // US13: App calculates default macro targets based on calorie goal
     // Standard 30% Protein, 30% Fat, 40% Carbs
     const protein_g = Math.round((calories * 0.3) / 4);
     const fat_g = Math.round((calories * 0.3) / 9);
