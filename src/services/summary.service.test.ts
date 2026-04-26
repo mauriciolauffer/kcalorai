@@ -105,6 +105,36 @@ describe("SummaryService", () => {
       expect(summary.meals.find((m) => m.meal === "snack")?.protein_g).toBe(3.3);
     });
 
+    it("should handle goal exceeded (negative remaining macros)", async () => {
+      const userId = "user-1";
+      const date = "2024-01-01";
+      const logs = [
+        {
+          meal: "dinner",
+          calories: 2500,
+          protein_g: 200,
+          fat_g: 100,
+          carbs_g: 300,
+        },
+      ];
+      const goal = {
+        daily_calories: 2000,
+        protein_g: 150,
+        fat_g: 70,
+        carbs_g: 200,
+      };
+
+      vi.mocked(mockFoodRepository.getLogsByDate).mockResolvedValue(logs as any);
+      vi.mocked(mockProfileRepository.getGoalByDate).mockResolvedValue(goal as any);
+
+      const summary = await summaryService.getDailySummary(userId, date);
+
+      expect(summary.remaining?.calories).toBe(-500);
+      expect(summary.remaining?.protein_g).toBe(-50);
+      expect(summary.remaining?.fat_g).toBe(-30);
+      expect(summary.remaining?.carbs_g).toBe(-100);
+    });
+
     it("should handle days with no logs and no goal", async () => {
       vi.mocked(mockFoodRepository.getLogsByDate).mockResolvedValue([]);
       vi.mocked(mockProfileRepository.getGoalByDate).mockResolvedValue(null);
@@ -208,6 +238,27 @@ describe("SummaryService", () => {
       expect(summary.days[3].calories).toBe(1000);
       expect(summary.days[4].calories).toBe(1200);
       expect(summary.days[5].calories).toBe(1400);
+    });
+
+    it("should round weekly averages to 1 decimal place", async () => {
+      const userId = "user-1";
+      const endDate = "2024-01-07";
+      const logs = [
+        {
+          date: "2024-01-01",
+          calories: 100,
+          protein_g: 1.11,
+          fat_g: 1.11,
+          carbs_g: 1.11,
+        },
+      ];
+
+      vi.mocked(mockFoodRepository.getLogsByDateRange).mockResolvedValue(logs as any);
+
+      const summary = await summaryService.getWeeklySummary(userId, endDate);
+
+      // Average: 1.11 / 7 = 0.1585... -> 0.2
+      expect(summary.average.protein_g).toBe(0.2);
     });
   });
 });
