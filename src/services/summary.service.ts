@@ -37,10 +37,10 @@ export class SummaryService {
     });
 
     const consumed: NutritionalValues = {
-      calories: mealSummaries.reduce((acc, meal) => acc + meal.calories, 0),
-      protein_g: this.round(mealSummaries.reduce((acc, meal) => acc + meal.protein_g, 0)),
-      fat_g: this.round(mealSummaries.reduce((acc, meal) => acc + meal.fat_g, 0)),
-      carbs_g: this.round(mealSummaries.reduce((acc, meal) => acc + meal.carbs_g, 0)),
+      calories: logs.reduce((acc, log) => acc + log.calories, 0),
+      protein_g: this.round(logs.reduce((acc, log) => acc + log.protein_g, 0)),
+      fat_g: this.round(logs.reduce((acc, log) => acc + log.fat_g, 0)),
+      carbs_g: this.round(logs.reduce((acc, log) => acc + log.carbs_g, 0)),
     };
 
     let target: NutritionalValues | null = null;
