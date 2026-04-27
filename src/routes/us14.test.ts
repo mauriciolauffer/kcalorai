@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { testClient } from "hono/testing";
 import { app } from "../app";
-import { Temporal } from "temporal-polyfill";
 
 vi.mock("../lib/auth", () => ({
   getAuth: vi.fn().mockReturnValue({
@@ -142,7 +141,7 @@ describe("User Story 14: Customize macro targets", () => {
       effective_from: "2024-01-01",
     };
 
-    db.first.mockImplementation((q: string) => {
+    db.first.mockImplementation(() => {
       if (lastQuery.includes("SELECT * FROM user_goals") && lastQuery.includes("effective_from <= ?")) {
         // Mock getGoalByDate
         return Promise.resolve(historicalGoal);
