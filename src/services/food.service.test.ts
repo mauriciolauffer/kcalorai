@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FoodService } from "./food.service";
 import { FoodRepository } from "../repositories/food.repository";
-import { NotFoundError } from "../types/errors";
+import { NotFoundError, ValidationError } from "../types/errors";
 
 describe("FoodService", () => {
   let service: FoodService;
@@ -42,6 +42,46 @@ describe("FoodService", () => {
     expect(result.id).toBe("log1");
   });
 
+  it("should scale nutritional values when food_id is provided", async () => {
+    const userId = "user1";
+    const foodId = "f1";
+    const food = {
+      id: foodId,
+      name: "Apple",
+      calories: 100,
+      protein_g: 1,
+      fat_g: 0.5,
+      carbs_g: 25,
+      serving_grams: 100,
+    };
+    const data = {
+      food_id: foodId,
+      servings: 1.5,
+      date: "2023-10-27",
+      meal: "snack" as const,
+    };
+    repository.getFoodById.mockResolvedValue(food);
+    repository.createLog.mockImplementation((d: any) => Promise.resolve({ id: "log1", ...d }));
+
+    const result = await service.logMeal(userId, data);
+
+    expect(result.calories).toBe(150); // 100 * 1.5
+    expect(result.protein_g).toBe(1.5); // 1 * 1.5
+    expect(result.fat_g).toBe(0.8); // 0.5 * 1.5 = 0.75 -> rounded to 1 decimal place = 0.8? actually toFixed(1) gives "0.8" for 0.75
+    expect(result.carbs_g).toBe(37.5); // 25 * 1.5
+  });
+
+  it("should throw ValidationError for manual entries without calories", async () => {
+    const userId = "user1";
+    const data = {
+      name: "Apple",
+      date: "2023-10-27",
+      meal: "snack" as const,
+    };
+
+    await expect(service.logMeal(userId, data as any)).rejects.toThrow(ValidationError);
+  });
+
   it("should log a meal with default name if name is missing (Quick Add)", async () => {
     const userId = "user1";
     const data = {
@@ -69,8 +109,45 @@ describe("FoodService", () => {
   });
 
   it("should throw NotFoundError if update fails", async () => {
-    repository.updateLog.mockRejectedValue(new Error("Fail"));
+    repository.getLog.mockResolvedValue(null);
     await expect(service.updateLog("u1", "l1", { name: "New" })).rejects.toThrow(NotFoundError);
+  });
+
+  it("should rescale nutritional values on update when servings change for an entry with food_id", async () => {
+    const userId = "u1";
+    const logId = "l1";
+    const foodId = "f1";
+    const food = {
+      id: foodId,
+      name: "Apple",
+      calories: 100,
+      protein_g: 1,
+      fat_g: 0.5,
+      carbs_g: 25,
+    };
+    const existingLog = {
+      id: logId,
+      user_id: userId,
+      food_id: foodId,
+      servings: 1,
+      calories: 100,
+      protein_g: 1,
+      fat_g: 0.5,
+      carbs_g: 25,
+    };
+
+    repository.getLog.mockResolvedValue(existingLog);
+    repository.getFoodById.mockResolvedValue(food);
+    repository.updateLog.mockImplementation((id: string, uid: string, d: any) =>
+      Promise.resolve({ ...existingLog, ...d }),
+    );
+
+    const result = await service.updateLog(userId, logId, { servings: 2 });
+
+    expect(result.calories).toBe(200);
+    expect(result.protein_g).toBe(2);
+    expect(result.fat_g).toBe(1);
+    expect(result.carbs_g).toBe(50);
   });
 
   it("should throw NotFoundError if delete fails", async () => {
