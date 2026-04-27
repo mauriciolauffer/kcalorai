@@ -1,6 +1,7 @@
 import { Temporal } from "temporal-polyfill";
 import { ProfileRepository } from "../repositories/profile.repository";
 import { SetupProfileRequest, ProfileResponse, UpdateGoalRequest } from "../types/profile";
+import { ValidationError } from "../types/errors";
 
 export class ProfileService {
   constructor(private profileRepository: ProfileRepository) {}
@@ -49,17 +50,35 @@ export class ProfileService {
   async updateGoal(userId: string, data: UpdateGoalRequest): Promise<ProfileResponse> {
     const { daily_calories, protein_g, fat_g, carbs_g } = data;
 
-    const macros =
-      protein_g !== undefined && fat_g !== undefined && carbs_g !== undefined
-        ? { protein_g, fat_g, carbs_g }
-        : this.calculateDefaultMacros(daily_calories);
+    let finalMacros: { protein_g: number; fat_g: number; carbs_g: number };
+
+    if (protein_g !== undefined || fat_g !== undefined || carbs_g !== undefined) {
+      // US14: User can manually adjust protein, fat, and carb targets
+      // If any macro is provided, we use provided values and fill missing ones from the latest goal
+      const latestGoal = await this.profileRepository.getLatestGoal(userId);
+      finalMacros = {
+        protein_g: protein_g ?? latestGoal?.protein_g ?? 0,
+        fat_g: fat_g ?? latestGoal?.fat_g ?? 0,
+        carbs_g: carbs_g ?? latestGoal?.carbs_g ?? 0,
+      };
+
+      // US14: Changes validate that macros align with total calories (with 5% tolerance)
+      this.validateMacroConsistency(
+        daily_calories,
+        finalMacros.protein_g,
+        finalMacros.fat_g,
+        finalMacros.carbs_g,
+      );
+    } else {
+      finalMacros = this.calculateDefaultMacros(daily_calories);
+    }
 
     const effective_from = data.effective_from ?? Temporal.Now.plainDateISO("UTC").toString();
 
     await this.profileRepository.createGoal({
       user_id: userId,
       daily_calories,
-      ...macros,
+      ...finalMacros,
       effective_from,
     });
 
@@ -115,5 +134,26 @@ export class ProfileService {
     const carbs_g = Math.round((calories * 0.4) / 4);
 
     return { protein_g, fat_g, carbs_g };
+  }
+
+  /**
+   * Validates that the sum of calories from macros (4/4/9 rule) is within a 5% tolerance
+   * of the daily calorie goal.
+   */
+  private validateMacroConsistency(
+    calories: number,
+    protein: number,
+    fat: number,
+    carbs: number,
+  ): void {
+    const calculatedCalories = protein * 4 + fat * 9 + carbs * 4;
+    const diff = Math.abs(calculatedCalories - calories);
+    const tolerance = calories * 0.05;
+
+    if (diff > tolerance) {
+      throw new ValidationError(
+        `Custom macros (${calculatedCalories} kcal) do not align with daily calorie goal (${calories} kcal).`,
+      );
+    }
   }
 }
