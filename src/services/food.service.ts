@@ -13,19 +13,24 @@ import { NotFoundError, ValidationError } from "../types/errors";
 export class FoodService {
   constructor(private foodRepository: FoodRepository) {}
 
+  private round(val: number): number {
+    return Math.round(val * 10) / 10;
+  }
+
   private async mapRequestToEntry(userId: string, data: LogMealRequest) {
     let { calories, protein_g, fat_g, carbs_g, name } = data;
     const servings = data.servings ?? 1;
 
     if (data.food_id) {
       const food = await this.foodRepository.getFoodById(data.food_id, userId);
-      if (food) {
-        name = name ?? food.name;
-        calories = calories ?? Math.round(food.calories * servings);
-        protein_g = protein_g ?? Number((food.protein_g * servings).toFixed(1));
-        fat_g = fat_g ?? Number((food.fat_g * servings).toFixed(1));
-        carbs_g = carbs_g ?? Number((food.carbs_g * servings).toFixed(1));
+      if (!food) {
+        throw new NotFoundError("Food item not found");
       }
+      name ??= food.name;
+      calories ??= Math.round(food.calories * servings);
+      protein_g ??= this.round(food.protein_g * servings);
+      fat_g ??= this.round(food.fat_g * servings);
+      carbs_g ??= this.round(food.carbs_g * servings);
     }
 
     if (calories === undefined) {
@@ -63,10 +68,10 @@ export class FoodService {
       const food = await this.foodRepository.getFoodById(existing.food_id, userId);
       if (food) {
         const servings = data.servings;
-        updateData.calories = data.calories ?? Math.round(food.calories * servings);
-        updateData.protein_g = data.protein_g ?? Number((food.protein_g * servings).toFixed(1));
-        updateData.fat_g = data.fat_g ?? Number((food.fat_g * servings).toFixed(1));
-        updateData.carbs_g = data.carbs_g ?? Number((food.carbs_g * servings).toFixed(1));
+        updateData.calories ??= Math.round(food.calories * servings);
+        updateData.protein_g ??= this.round(food.protein_g * servings);
+        updateData.fat_g ??= this.round(food.fat_g * servings);
+        updateData.carbs_g ??= this.round(food.carbs_g * servings);
       }
     }
 
