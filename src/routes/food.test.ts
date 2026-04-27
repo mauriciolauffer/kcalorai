@@ -78,6 +78,40 @@ describe("Food Routes", () => {
     expect(body.calories).toBe(500);
   });
 
+  it("POST /food should scale nutritional values when food_id is provided", async () => {
+    const foodId = "f1";
+    const food = {
+      id: foodId,
+      name: "Apple",
+      calories: 100,
+      protein_g: 1,
+      fat_g: 0.5,
+      carbs_g: 25,
+      serving_grams: 100,
+    };
+    const logData = {
+      food_id: foodId,
+      servings: 2,
+      date: "2023-10-27",
+      meal: "snack",
+    };
+
+    db.first.mockResolvedValueOnce(food); // for getFoodById
+    db.first.mockResolvedValueOnce({ id: "log1", ...logData, calories: 200, protein_g: 2, fat_g: 1, carbs_g: 50, name: "Apple", user_id: userId }); // for createLog
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.food.$post({ json: logData as any });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body).toMatchObject({
+      calories: 200,
+      protein_g: 2,
+      fat_g: 1,
+      carbs_g: 50,
+    });
+  });
+
   it("POST /food should fail if meal is missing", async () => {
     const logData = {
       calories: 500,
