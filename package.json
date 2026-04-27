@@ -17,22 +17,22 @@
   },
   "dependencies": {
     "@hono/typia-validator": "^0.1.2",
-    "better-auth": "^1.6.2",
-    "hono": "^4.12.12",
+    "better-auth": "^1.6.9",
+    "hono": "^4.12.15",
     "temporal-polyfill": "^0.3.2",
     "typia": "^12.0.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260411.1",
+    "@cloudflare/workers-types": "^4.20260426.1",
     "@typia/unplugin": "^12.0.2",
-    "@vitest/coverage-v8": "^4.1.4",
-    "oxfmt": "^0.44.0",
-    "oxlint": "^1.59.0",
-    "rolldown": "1.0.0-rc.15",
+    "@vitest/coverage-v8": "^4.1.5",
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0",
+    "rolldown": "1.0.0-rc.17",
     "ts-patch": "^3.3.0",
-    "typescript": "~6.0.2",
-    "vitest": "^4.1.4",
-    "wrangler": "^4.81.1"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.5",
+    "wrangler": "^4.85.0"
   },
   "engines": {
     "node": ">=20",
