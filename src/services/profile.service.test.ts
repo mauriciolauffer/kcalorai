@@ -155,22 +155,23 @@ describe("ProfileService", () => {
       expect(result.latest_goal?.protein_g).toBe(200);
     });
 
-    it("should use default macros if any macro is missing", async () => {
+    it("should use latest goal to fill missing macros and validate consistency", async () => {
       const data = {
         daily_calories: 2000,
-        protein_g: 180, // Missing fat_g and carbs_g
+        protein_g: 150, // 600 kcal
+        // fat_g (67 -> 603) and carbs_g (200 -> 800) missing, will be filled from latest goal
       };
       profileRepository.createGoal.mockImplementation((goal: any) =>
         Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
       );
       profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
       profileRepository.getLatestGoal.mockResolvedValue({
-        id: "goal1",
+        id: "goal-old",
         daily_calories: 2000,
-        protein_g: 150, // Default
-        fat_g: 67, // Default
-        carbs_g: 200, // Default
-        effective_from: Temporal.Now.plainDateISO("UTC").toString(),
+        protein_g: 150,
+        fat_g: 67,
+        carbs_g: 200,
+        effective_from: "2023-01-01",
       });
 
       const result = await profileService.updateGoal("user1", data);
