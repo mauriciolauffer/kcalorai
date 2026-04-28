@@ -97,7 +97,16 @@ describe("Food Routes", () => {
     };
 
     db.first.mockResolvedValueOnce(food); // for getFoodById
-    db.first.mockResolvedValueOnce({ id: "log1", ...logData, calories: 200, protein_g: 2, fat_g: 1, carbs_g: 50, name: "Apple", user_id: userId }); // for createLog
+    db.first.mockResolvedValueOnce({
+      id: "log1",
+      ...logData,
+      calories: 200,
+      protein_g: 2,
+      fat_g: 1,
+      carbs_g: 50,
+      name: "Apple",
+      user_id: userId,
+    }); // for createLog
 
     const client = testClient(app, { ...env, DB: db } as any);
     const res = await client.food.$post({ json: logData as any });

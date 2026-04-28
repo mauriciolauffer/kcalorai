@@ -204,7 +204,9 @@ describe("FoodService", () => {
       const newDate = "2023-10-28";
 
       repository.getLog.mockResolvedValue(existingLog);
-      repository.createLog.mockImplementation((data: any) => Promise.resolve({ id: "log2", ...data }));
+      repository.createLog.mockImplementation((data: any) =>
+        Promise.resolve({ id: "log2", ...data }),
+      );
 
       const result = await service.copyLog(userId, logId, newDate);
 
