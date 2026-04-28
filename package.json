@@ -9,10 +9,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint",
+    "lint": "oxfmt --check && oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
-    "format:check": "oxfmt --check",
     "prepare": "ts-patch install"
   },
   "dependencies": {
@@ -26,8 +25,8 @@
     "@cloudflare/workers-types": "^4.20260426.1",
     "@typia/unplugin": "^12.0.2",
     "@vitest/coverage-v8": "^4.1.5",
-    "oxfmt": "^0.46.0",
-    "oxlint": "^1.61.0",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
     "rolldown": "1.0.0-rc.17",
     "ts-patch": "^3.3.0",
     "typescript": "~6.0.3",
