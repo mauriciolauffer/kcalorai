@@ -56,4 +56,52 @@ describe("ReminderService", () => {
 
     await expect(service.deleteReminder(userId, "invalid-id")).rejects.toThrow(AppError);
   });
+
+  it("should trigger reminders that match the current time", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
+      { user_id: "u1", time: "08:00", timezone: "UTC" },
+    ]);
+
+    const { Temporal } = await import("temporal-polyfill");
+    const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
+    await service.triggerReminders(now);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("u1"));
+    logSpy.mockRestore();
+  });
+
+  it("should not trigger reminders that do not match the current time", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
+      { user_id: "u1", time: "09:00", timezone: "UTC" },
+    ]);
+
+    const { Temporal } = await import("temporal-polyfill");
+    const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
+    await service.triggerReminders(now);
+
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  it("should log error and continue when a reminder throws", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
+      { user_id: "u1", time: "08:00", timezone: "Bad/Timezone" },
+    ]);
+
+    const { Temporal } = await import("temporal-polyfill");
+    const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
+    await service.triggerReminders(now);
+
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("u1"), expect.anything());
+    errSpy.mockRestore();
+  });
+
+  it("should update reminder settings", async () => {
+    repository.upsertSettings.mockResolvedValue({ user_id: "user1", enabled: true });
+    const result = await service.updateSettings("user1", true);
+    expect(result.enabled).toBe(true);
+  });
 });

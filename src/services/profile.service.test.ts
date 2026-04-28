@@ -52,6 +52,28 @@ describe("ProfileService", () => {
       expect(result.latest_goal?.carbs_g).toBe(276);
     });
 
+    it("should add 500 kcal for gain_weight goal", async () => {
+      const data = {
+        age: 30,
+        height_cm: 175,
+        weight_kg: 70,
+        gender: "male" as const,
+        activity_level: "sedentary" as const,
+        goal: "gain_weight" as const,
+      };
+
+      profileRepository.upsertProfile.mockResolvedValue({ ...data, user_id: "user1", profile_completed: true });
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+
+      const result = await profileService.setupProfile("user1", data);
+
+      // BMR = 10*70 + 6.25*175 - 5*30 + 5 = 700 + 1093.75 - 150 + 5 = 1648.75
+      // TDEE = 1648.75 * 1.2 = 1978.5 -> gain +500 = 2478.5 -> round = 2479
+      expect(result.latest_goal?.daily_calories).toBe(2479);
+    });
+
     it("should enforce minimum calories", async () => {
       const data = {
         age: 80,

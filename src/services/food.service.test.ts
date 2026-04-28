@@ -227,4 +227,15 @@ describe("FoodService", () => {
       await expect(service.copyLog("u1", "l1")).rejects.toThrow(NotFoundError);
     });
   });
+
+  it("should throw NotFoundError when food_id is provided but food not found", async () => {
+    repository.getFoodById.mockResolvedValue(null);
+    await expect(
+      service.logMeal("user1", {
+        food_id: "missing",
+        date: "2023-10-27",
+        meal: "snack" as const,
+      } as any),
+    ).rejects.toThrow(NotFoundError);
+  });
 });

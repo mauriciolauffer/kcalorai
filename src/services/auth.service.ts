@@ -4,7 +4,10 @@ import { ConflictError } from "../types/errors";
 import { APIError } from "better-auth/api";
 
 export class AuthService {
-  constructor(private auth: Auth) {}
+  private auth: Auth;
+  constructor(auth: Auth) {
+    this.auth = auth;
+  }
 
   async signup(data: SignupRequest): Promise<AuthResponse> {
     try {

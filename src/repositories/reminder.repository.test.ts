@@ -62,4 +62,36 @@ describe("ReminderRepository", () => {
     const result = await repository.deleteReminder("id", "user1");
     expect(result).toBe(true);
   });
+
+  it("should return false when no reminder is deleted", async () => {
+    db.run.mockResolvedValue({ meta: { changes: 0 } });
+    const result = await repository.deleteReminder("missing", "user1");
+    expect(result).toBe(false);
+  });
+
+  it("should throw when upsertSettings returns null", async () => {
+    db.first.mockResolvedValue(null);
+    await expect(repository.upsertSettings("user1", true)).rejects.toThrow(
+      "Failed to upsert reminder settings",
+    );
+  });
+
+  it("should get all enabled reminders", async () => {
+    const rows = [{ user_id: "u1", time: "08:00", timezone: "UTC" }];
+    db.all.mockResolvedValue({ results: rows });
+    const result = await repository.getAllEnabledReminders();
+    expect(result).toEqual(rows);
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("WHERE rs.enabled = 1"));
+  });
+
+  it("should return null when getSettings finds no row", async () => {
+    db.first.mockResolvedValue(null);
+    const result = await repository.getSettings("user1");
+    expect(result).toBeNull();
+  });
+
+  it("should throw when addReminder returns null", async () => {
+    db.first.mockResolvedValue(null);
+    await expect(repository.addReminder("user1", "09:00")).rejects.toThrow("Failed to add reminder");
+  });
 });

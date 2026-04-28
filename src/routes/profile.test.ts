@@ -214,4 +214,22 @@ describe("Profile Routes", () => {
     expect(data.latest_goal.daily_calories).toBe(2000);
     expect(data.latest_goal.effective_from).toBe("2023-10-27");
   });
+
+  it("POST /profile/goal should reject invalid input", async () => {
+    vi.mocked(getAuth).mockReturnValue({
+      api: {
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: userId, email: "test@example.com", name: "Test" },
+          session: { id: "session-id" },
+        }),
+      },
+    } as any);
+
+    const client = testClient(app, env);
+    const res = await client.profile.goal.$post({
+      json: {} as any,
+    });
+
+    expect(res.status).toBe(400);
+  });
 });

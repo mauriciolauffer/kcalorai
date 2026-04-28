@@ -1,7 +1,10 @@
 import { ReminderSettings, Reminder } from "../types/reminder";
 
 export class ReminderRepository {
-  constructor(private db: D1Database) {}
+  private db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   async getSettings(userId: string): Promise<ReminderSettings | null> {
     const row = await this.db

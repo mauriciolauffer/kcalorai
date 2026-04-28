@@ -65,6 +65,12 @@ describe("Reminder Routes", () => {
     expect(body.enabled).toBe(false);
   });
 
+  it("PATCH /reminders/settings should reject invalid input", async () => {
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await client.reminders.settings.$patch({ json: {} as any });
+    expect(res.status).toBe(400);
+  });
+
   it("POST /reminders should add a new reminder", async () => {
     db.all.mockResolvedValue({ results: [] }); // No existing
     db.first.mockImplementation(async () => {
@@ -83,5 +89,16 @@ describe("Reminder Routes", () => {
     const res = await client.reminders.$post({ json: { time: "99:99" } as any });
 
     expect(res.status).toBe(400);
+  });
+
+  it("DELETE /reminders/:id should delete a reminder", async () => {
+    db.run.mockResolvedValue({ meta: { changes: 1 } });
+    db.first.mockResolvedValue({ user_id: userId, enabled: 1 });
+    db.all.mockResolvedValue({ results: [] });
+
+    const client = testClient(app, { ...env, DB: db } as any);
+    const res = await (client.reminders as any)[":id"].$delete({ param: { id: "reminder-1" } });
+
+    expect(res.status).toBe(200);
   });
 });

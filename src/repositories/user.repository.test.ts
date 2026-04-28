@@ -37,4 +37,18 @@ describe("UserRepository", () => {
     expect(db.bind).toHaveBeenCalledWith(email);
     expect(result?.email).toBe(email);
   });
+
+  it("should throw when create returns null", async () => {
+    db.first.mockResolvedValue(null);
+    await expect(
+      repository.create({ id: "1", name: "T", email: "t@t.com", password_hash: "h" }),
+    ).rejects.toThrow("Failed to create user");
+  });
+
+  it("should find a user by id", async () => {
+    db.first.mockResolvedValue({ id: "1", email: "t@t.com" });
+    const result = await repository.findById("1");
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("WHERE id = ?"));
+    expect(result?.id).toBe("1");
+  });
 });

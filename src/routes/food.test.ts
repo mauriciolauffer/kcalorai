@@ -594,4 +594,27 @@ describe("Food Routes", () => {
       expect(res.status).toBe(500); // Because FoodService throws when repository returns null
     });
   });
+
+  describe("Validator failure paths", () => {
+    it("POST /food/:id/copy should return 400 for invalid date format", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food[":id"].copy.$post({
+        param: { id: "log1" },
+        json: { date: "not-a-date" } as any,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("POST /food/sync should return 400 for missing required fields", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.sync.$post({ json: {} as any });
+      expect(res.status).toBe(400);
+    });
+
+    it("GET /food/summary should return 400 for invalid date format", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.summary.$get({ query: { date: "bad-date" } });
+      expect(res.status).toBe(400);
+    });
+  });
 });

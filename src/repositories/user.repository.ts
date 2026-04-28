@@ -1,7 +1,10 @@
 import { User, CreateUserDTO } from "../types/user";
 
 export class UserRepository {
-  constructor(private db: D1Database) {}
+  private db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   async create(user: CreateUserDTO): Promise<User> {
     const result = await this.db

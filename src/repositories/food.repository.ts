@@ -1,7 +1,10 @@
 import { FoodLog, Food } from "../types/food";
 
 export class FoodRepository {
-  constructor(private db: D1Database) {}
+  private db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   private getUpsertStatement(
     log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string },

@@ -4,7 +4,10 @@ import { ReminderResponse, ReminderSettings } from "../types/reminder";
 import { AppError } from "../types/errors";
 
 export class ReminderService {
-  constructor(private reminderRepository: ReminderRepository) {}
+  private reminderRepository: ReminderRepository;
+  constructor(reminderRepository: ReminderRepository) {
+    this.reminderRepository = reminderRepository;
+  }
 
   async getReminderData(userId: string): Promise<ReminderResponse> {
     let settings = await this.reminderRepository.getSettings(userId);
