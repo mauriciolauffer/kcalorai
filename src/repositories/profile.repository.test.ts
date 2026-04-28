@@ -29,9 +29,9 @@ describe("ProfileRepository", () => {
 
   it("should throw when upsertProfile returns null", async () => {
     db.first.mockResolvedValue(null);
-    await expect(
-      repository.upsertProfile({ user_id: "user1" }),
-    ).rejects.toThrow("Failed to upsert profile");
+    await expect(repository.upsertProfile({ user_id: "user1" })).rejects.toThrow(
+      "Failed to upsert profile",
+    );
   });
 
   it("should upsert a profile and return it", async () => {

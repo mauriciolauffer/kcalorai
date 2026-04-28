@@ -14,7 +14,13 @@ export default defineConfig({
         branches: 85,
         statements: 85,
       },
-      exclude: ["**/node_modules/**", "**/dist/**", "**/tests/**", "**/*.test.ts", "src/lib/auth.ts"],
+      exclude: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/tests/**",
+        "**/*.test.ts",
+        "src/lib/auth.ts",
+      ],
     },
   },
 });

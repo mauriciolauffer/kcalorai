@@ -59,9 +59,9 @@ describe("ReminderService", () => {
 
   it("should trigger reminders that match the current time", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
-      { user_id: "u1", time: "08:00", timezone: "UTC" },
-    ]);
+    repository.getAllEnabledReminders = vi
+      .fn()
+      .mockResolvedValue([{ user_id: "u1", time: "08:00", timezone: "UTC" }]);
 
     const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
@@ -73,9 +73,9 @@ describe("ReminderService", () => {
 
   it("should not trigger reminders that do not match the current time", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
-      { user_id: "u1", time: "09:00", timezone: "UTC" },
-    ]);
+    repository.getAllEnabledReminders = vi
+      .fn()
+      .mockResolvedValue([{ user_id: "u1", time: "09:00", timezone: "UTC" }]);
 
     const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
@@ -87,9 +87,9 @@ describe("ReminderService", () => {
 
   it("should log error and continue when a reminder throws", async () => {
     const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
-      { user_id: "u1", time: "08:00", timezone: "Bad/Timezone" },
-    ]);
+    repository.getAllEnabledReminders = vi
+      .fn()
+      .mockResolvedValue([{ user_id: "u1", time: "08:00", timezone: "Bad/Timezone" }]);
 
     const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");

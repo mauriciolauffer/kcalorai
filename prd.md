@@ -38,15 +38,15 @@ The backend runs entirely on Cloudflare Workers backed by D1 (SQLite), exposed t
 
 ## 5. Technical Constraints
 
-| Concern | Decision |
-|---|---|
-| Runtime | Cloudflare Workers (TypeScript) |
-| Database | Cloudflare D1 (SQLite) |
-| HTTP framework | Hono |
-| Testing | Vitest |
-| Auth | Stateless JWT via `Authorization` header |
-| Package manager | pnpm ≥ 10 |
-| Node.js target | ≥ 20 (dev tooling only; Workers runtime applies at edge) |
+| Concern         | Decision                                                 |
+| --------------- | -------------------------------------------------------- |
+| Runtime         | Cloudflare Workers (TypeScript)                          |
+| Database        | Cloudflare D1 (SQLite)                                   |
+| HTTP framework  | Hono                                                     |
+| Testing         | Vitest                                                   |
+| Auth            | Stateless JWT via `Authorization` header                 |
+| Package manager | pnpm ≥ 10                                                |
+| Node.js target  | ≥ 20 (dev tooling only; Workers runtime applies at edge) |
 
 No alternative runtime, database, or framework may be introduced without updating `AGENTS.md`.
 
@@ -76,30 +76,30 @@ All business logic lives in services. Routes handle only request parsing, valida
 
 Acceptance criteria for each story are defined in `user-stories.md`. This section documents implementation notes and any backend-specific constraints not captured there.
 
-| Area | Stories | Implementation |
-|---|---|---|
-| Authentication | US1 | `src/routes/auth.ts`, `src/services/auth.service.ts`, `src/middlewares/auth.ts` |
-| User Profile & Calorie Goal | US2, US8 | `src/routes/profile.ts`, `src/services/profile.service.ts`, `src/repositories/profile.repository.ts` |
-| Food Logging | US3, US4, US5, US10, US15 | `src/routes/food.ts`, `src/services/food.service.ts`, `src/repositories/food.repository.ts` |
-| Daily Summary | US6, US12, US13, US16 | `src/services/summary.service.ts` |
-| Weekly Trends | US7, US18 | Planned |
-| Macro Targets | US13, US14 | `src/routes/us13.test.ts`, `src/routes/us14.test.ts` |
-| Quick Add Macros | US19 | Planned |
-| Macro-Calorie Validation | US20 | Planned — applies 4/4/9 rule with 5% tolerance; warns but does not auto-correct |
-| Reminders | US9 | `src/routes/reminder.ts`, `src/services/reminder.service.ts`, `src/repositories/reminder.repository.ts` — delivered via Cloudflare Cron Triggers, best-effort in v1 |
-| Data Persistence & Sync | US11 | Every write committed to D1 before response; offline handling delegated to client |
+| Area                        | Stories                   | Implementation                                                                                                                                                      |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication              | US1                       | `src/routes/auth.ts`, `src/services/auth.service.ts`, `src/middlewares/auth.ts`                                                                                     |
+| User Profile & Calorie Goal | US2, US8                  | `src/routes/profile.ts`, `src/services/profile.service.ts`, `src/repositories/profile.repository.ts`                                                                |
+| Food Logging                | US3, US4, US5, US10, US15 | `src/routes/food.ts`, `src/services/food.service.ts`, `src/repositories/food.repository.ts`                                                                         |
+| Daily Summary               | US6, US12, US13, US16     | `src/services/summary.service.ts`                                                                                                                                   |
+| Weekly Trends               | US7, US18                 | Planned                                                                                                                                                             |
+| Macro Targets               | US13, US14                | `src/routes/us13.test.ts`, `src/routes/us14.test.ts`                                                                                                                |
+| Quick Add Macros            | US19                      | Planned                                                                                                                                                             |
+| Macro-Calorie Validation    | US20                      | Planned — applies 4/4/9 rule with 5% tolerance; warns but does not auto-correct                                                                                     |
+| Reminders                   | US9                       | `src/routes/reminder.ts`, `src/services/reminder.service.ts`, `src/repositories/reminder.repository.ts` — delivered via Cloudflare Cron Triggers, best-effort in v1 |
+| Data Persistence & Sync     | US11                      | Every write committed to D1 before response; offline handling delegated to client                                                                                   |
 
 ---
 
 ## 8. Data Model (Summary)
 
-| Entity | Key Fields |
-|---|---|
-| User | id, email, password_hash |
-| Profile | user_id, age, height, weight, gender, activity_level, goal, calorie_target |
-| FoodEntry | id, user_id, name, calories, protein, fat, carbs, meal_type, logged_at |
-| MacroTarget | user_id, protein_g, fat_g, carbs_g, effective_from |
-| Reminder | id, user_id, time, enabled |
+| Entity      | Key Fields                                                                 |
+| ----------- | -------------------------------------------------------------------------- |
+| User        | id, email, password_hash                                                   |
+| Profile     | user_id, age, height, weight, gender, activity_level, goal, calorie_target |
+| FoodEntry   | id, user_id, name, calories, protein, fat, carbs, meal_type, logged_at     |
+| MacroTarget | user_id, protein_g, fat_g, carbs_g, effective_from                         |
+| Reminder    | id, user_id, time, enabled                                                 |
 
 Full schema: `src/db/schema.sql`
 
@@ -107,18 +107,18 @@ Full schema: `src/db/schema.sql`
 
 ## 9. API Surface (Planned Endpoints)
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/auth/signup` | Create account |
-| POST | `/auth/login` | Authenticate and receive JWT |
-| GET / PUT | `/profile` | Read or update user profile |
-| GET / POST | `/food` | List or log food entries |
-| PUT / DELETE | `/food/:id` | Edit or delete a food entry |
-| GET | `/summary/daily` | Daily calorie and macro summary |
-| GET | `/summary/weekly` | Weekly trend data |
-| GET / PUT | `/profile/macros` | Read or update macro targets |
-| GET / POST | `/reminders` | List or create reminders |
-| PUT / DELETE | `/reminders/:id` | Update or delete a reminder |
+| Method       | Path              | Description                     |
+| ------------ | ----------------- | ------------------------------- |
+| POST         | `/auth/signup`    | Create account                  |
+| POST         | `/auth/login`     | Authenticate and receive JWT    |
+| GET / PUT    | `/profile`        | Read or update user profile     |
+| GET / POST   | `/food`           | List or log food entries        |
+| PUT / DELETE | `/food/:id`       | Edit or delete a food entry     |
+| GET          | `/summary/daily`  | Daily calorie and macro summary |
+| GET          | `/summary/weekly` | Weekly trend data               |
+| GET / PUT    | `/profile/macros` | Read or update macro targets    |
+| GET / POST   | `/reminders`      | List or create reminders        |
+| PUT / DELETE | `/reminders/:id`  | Update or delete a reminder     |
 
 ---
 
@@ -143,11 +143,11 @@ Full schema: `src/db/schema.sql`
 
 ## 12. Environments
 
-| Environment | Purpose |
-|---|---|
-| `dev` | Local development via `wrangler dev` |
-| `staging` | Pre-production validation |
-| `production` | Live edge deployment |
+| Environment  | Purpose                              |
+| ------------ | ------------------------------------ |
+| `dev`        | Local development via `wrangler dev` |
+| `staging`    | Pre-production validation            |
+| `production` | Live edge deployment                 |
 
 Each environment has isolated D1 databases and secrets. Wrangler configuration (`wrangler.jsonc`) is the authoritative source for bindings.
 
@@ -166,25 +166,25 @@ Each environment has isolated D1 databases and secrets. Wrangler configuration (
 
 ## 14. Delivery Status
 
-| User Story | Status |
-|---|---|
-| US1 — Account creation | Implemented |
-| US2 — Profile setup | Implemented |
-| US3 — Log a meal | Implemented |
-| US4 — Search food database | Implemented |
-| US5 — Quick add calories | Implemented |
-| US6 — Daily summary | Implemented |
-| US7 — Weekly trends | Planned |
-| US8 — Adjust calorie goal | Implemented |
-| US9 — Reminders | Implemented |
-| US10 — Food history | Implemented |
-| US11 — Data persistence | Implemented |
-| US12 — Daily macro breakdown | Implemented |
-| US13 — Macro goals | Implemented |
-| US14 — Customize macro targets | Implemented |
-| US15 — Log food with macros | Implemented |
-| US16 — Per-meal macro distribution | Planned |
+| User Story                          | Status                |
+| ----------------------------------- | --------------------- |
+| US1 — Account creation              | Implemented           |
+| US2 — Profile setup                 | Implemented           |
+| US3 — Log a meal                    | Implemented           |
+| US4 — Search food database          | Implemented           |
+| US5 — Quick add calories            | Implemented           |
+| US6 — Daily summary                 | Implemented           |
+| US7 — Weekly trends                 | Planned               |
+| US8 — Adjust calorie goal           | Implemented           |
+| US9 — Reminders                     | Implemented           |
+| US10 — Food history                 | Implemented           |
+| US11 — Data persistence             | Implemented           |
+| US12 — Daily macro breakdown        | Implemented           |
+| US13 — Macro goals                  | Implemented           |
+| US14 — Customize macro targets      | Implemented           |
+| US15 — Log food with macros         | Implemented           |
+| US16 — Per-meal macro distribution  | Planned               |
 | US17 — Macro progress visualization | Planned (client-side) |
-| US18 — Weekly macro trends | Planned |
-| US19 — Quick add macros | Planned |
-| US20 — Macro-calorie validation | Planned |
+| US18 — Weekly macro trends          | Planned               |
+| US19 — Quick add macros             | Planned               |
+| US20 — Macro-calorie validation     | Planned               |

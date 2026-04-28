@@ -62,7 +62,11 @@ describe("ProfileService", () => {
         goal: "gain_weight" as const,
       };
 
-      profileRepository.upsertProfile.mockResolvedValue({ ...data, user_id: "user1", profile_completed: true });
+      profileRepository.upsertProfile.mockResolvedValue({
+        ...data,
+        user_id: "user1",
+        profile_completed: true,
+      });
       profileRepository.createGoal.mockImplementation((goal: any) =>
         Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
       );

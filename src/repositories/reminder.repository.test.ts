@@ -92,6 +92,8 @@ describe("ReminderRepository", () => {
 
   it("should throw when addReminder returns null", async () => {
     db.first.mockResolvedValue(null);
-    await expect(repository.addReminder("user1", "09:00")).rejects.toThrow("Failed to add reminder");
+    await expect(repository.addReminder("user1", "09:00")).rejects.toThrow(
+      "Failed to add reminder",
+    );
   });
 });

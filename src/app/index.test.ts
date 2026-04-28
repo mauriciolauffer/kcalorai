@@ -44,10 +44,12 @@ describe("API Gateway", () => {
       }
       return c.json({ error: "Internal Server Error" }, 500);
     });
-    h.get("/boom", () => { throw new AppError("oops", 422, { field: "x" }); });
+    h.get("/boom", () => {
+      throw new AppError("oops", 422, { field: "x" });
+    });
     const res = await h.fetch(new Request("http://localhost/boom"));
     expect(res.status).toBe(422);
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     expect(body.error).toBe("oops");
     expect(body.details).toEqual({ field: "x" });
   });
@@ -58,7 +60,9 @@ describe("API Gateway", () => {
       if (err instanceof HTTPException) return err.getResponse();
       return c.json({ error: "Internal Server Error" }, 500);
     });
-    h.get("/forbidden", () => { throw new HTTPException(403, { message: "forbidden" }); });
+    h.get("/forbidden", () => {
+      throw new HTTPException(403, { message: "forbidden" });
+    });
     const res = await h.fetch(new Request("http://localhost/forbidden"));
     expect(res.status).toBe(403);
   });
@@ -68,6 +72,3 @@ describe("API Gateway", () => {
     expect(res.status).toBe(401);
   });
 });
-
-
-
