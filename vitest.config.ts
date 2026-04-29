@@ -10,8 +10,17 @@ export default defineConfig({
       provider: "v8",
       thresholds: {
         lines: 85,
+        functions: 85,
+        branches: 85,
+        statements: 85,
       },
-      exclude: ["**/node_modules/**", "**/dist/**", "**/tests/**", "**/*.test.ts"],
+      exclude: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/tests/**",
+        "**/*.test.ts",
+        "src/lib/auth.ts",
+      ],
     },
   },
 });

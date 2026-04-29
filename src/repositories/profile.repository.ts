@@ -1,7 +1,10 @@
 import { UserProfile, UserGoal } from "../types/profile";
 
 export class ProfileRepository {
-  constructor(private db: D1Database) {}
+  private db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   async getProfile(userId: string): Promise<UserProfile | null> {
     const row = await this.db

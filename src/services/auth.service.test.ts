@@ -44,4 +44,24 @@ describe("AuthService", () => {
 
     await expect(authService.signup(data)).rejects.toThrow("Failed to signup");
   });
+
+  it("should throw ConflictError when email is already in use", async () => {
+    const data = { name: "Test User", email: "test@example.com", password: "Password123" };
+    const apiError = Object.assign(new Error("Email already in use"), {
+      status: 422,
+    });
+    Object.setPrototypeOf(apiError, (await import("better-auth/api")).APIError.prototype);
+    auth.api.signUpEmail.mockRejectedValue(apiError);
+
+    const { ConflictError } = await import("../types/errors");
+    await expect(authService.signup(data)).rejects.toThrow(ConflictError);
+  });
+
+  it("should re-throw unknown errors", async () => {
+    const data = { name: "Test User", email: "test@example.com", password: "Password123" };
+    const unknown = new Error("network failure");
+    auth.api.signUpEmail.mockRejectedValue(unknown);
+
+    await expect(authService.signup(data)).rejects.toThrow("network failure");
+  });
 });

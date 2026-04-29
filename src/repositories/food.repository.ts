@@ -1,7 +1,10 @@
 import { FoodLog, Food } from "../types/food";
 
 export class FoodRepository {
-  constructor(private db: D1Database) {}
+  private db: D1Database;
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   private getUpsertStatement(
     log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string },
@@ -42,12 +45,16 @@ export class FoodRepository {
       );
   }
 
-  async createLog(log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string }): Promise<FoodLog> {
+  async createLog(
+    log: Omit<FoodLog, "id" | "created_at" | "updated_at"> & { id?: string },
+  ): Promise<FoodLog> {
     const id = log.id || crypto.randomUUID();
     const result = await this.getUpsertStatement(log, id).first<FoodLog>();
 
     if (!result) {
-      throw new Error("Failed to create food log (possibly due to user_id mismatch on existing ID)");
+      throw new Error(
+        "Failed to create food log (possibly due to user_id mismatch on existing ID)",
+      );
     }
     return result;
   }
@@ -148,7 +155,9 @@ export class FoodRepository {
 
   async getLogsSince(userId: string, since: string): Promise<FoodLog[]> {
     const result = await this.db
-      .prepare("SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC")
+      .prepare(
+        "SELECT * FROM food_logs WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC",
+      )
       .bind(userId, since)
       .all<FoodLog>();
     return result.results;

@@ -97,7 +97,16 @@ describe("Food Routes", () => {
     };
 
     db.first.mockResolvedValueOnce(food); // for getFoodById
-    db.first.mockResolvedValueOnce({ id: "log1", ...logData, calories: 200, protein_g: 2, fat_g: 1, carbs_g: 50, name: "Apple", user_id: userId }); // for createLog
+    db.first.mockResolvedValueOnce({
+      id: "log1",
+      ...logData,
+      calories: 200,
+      protein_g: 2,
+      fat_g: 1,
+      carbs_g: 50,
+      name: "Apple",
+      user_id: userId,
+    }); // for createLog
 
     const client = testClient(app, { ...env, DB: db } as any);
     const res = await client.food.$post({ json: logData as any });
@@ -583,6 +592,29 @@ describe("Food Routes", () => {
       const res = await client.food.$post({ json: logData });
 
       expect(res.status).toBe(500); // Because FoodService throws when repository returns null
+    });
+  });
+
+  describe("Validator failure paths", () => {
+    it("POST /food/:id/copy should return 400 for invalid date format", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food[":id"].copy.$post({
+        param: { id: "log1" },
+        json: { date: "not-a-date" } as any,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("POST /food/sync should return 400 for missing required fields", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.sync.$post({ json: {} as any });
+      expect(res.status).toBe(400);
+    });
+
+    it("GET /food/summary should return 400 for invalid date format", async () => {
+      const client = testClient(app, { ...env, DB: db } as any);
+      const res = await client.food.summary.$get({ query: { date: "bad-date" } });
+      expect(res.status).toBe(400);
     });
   });
 });

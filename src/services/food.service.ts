@@ -11,7 +11,10 @@ import {
 import { NotFoundError, ValidationError } from "../types/errors";
 
 export class FoodService {
-  constructor(private foodRepository: FoodRepository) {}
+  private foodRepository: FoodRepository;
+  constructor(foodRepository: FoodRepository) {
+    this.foodRepository = foodRepository;
+  }
 
   private round(val: number): number {
     return Math.round(val * 10) / 10;

@@ -106,8 +106,8 @@ describe("User Story 14: Customize macro targets", () => {
     const updateGoalData = {
       daily_calories: 2000,
       protein_g: 100, // 400
-      fat_g: 50,    // 450
-      carbs_g: 100,  // 400
+      fat_g: 50, // 450
+      carbs_g: 100, // 400
       // Total = 1250 kcal, far from 2000
     };
 
@@ -142,7 +142,10 @@ describe("User Story 14: Customize macro targets", () => {
     };
 
     db.first.mockImplementation(() => {
-      if (lastQuery.includes("SELECT * FROM user_goals") && lastQuery.includes("effective_from <= ?")) {
+      if (
+        lastQuery.includes("SELECT * FROM user_goals") &&
+        lastQuery.includes("effective_from <= ?")
+      ) {
         // Mock getGoalByDate
         return Promise.resolve(historicalGoal);
       }
@@ -152,7 +155,10 @@ describe("User Story 14: Customize macro targets", () => {
       if (lastQuery.includes("SELECT * FROM user_profiles")) {
         return Promise.resolve({ user_id: userId, profile_completed: 1 });
       }
-      if (lastQuery.includes("SELECT * FROM user_goals") && lastQuery.includes("ORDER BY effective_from DESC")) {
+      if (
+        lastQuery.includes("SELECT * FROM user_goals") &&
+        lastQuery.includes("ORDER BY effective_from DESC")
+      ) {
         return Promise.resolve({ ...newGoalData, id: "goal-new" });
       }
       return Promise.resolve(null);

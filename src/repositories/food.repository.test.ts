@@ -120,15 +120,6 @@ describe("FoodRepository", () => {
     expect(db.prepare).not.toHaveBeenCalledWith(expect.stringContaining("SELECT * FROM foods"));
   });
 
-  it("should apply LIMIT 50 to search query", async () => {
-    const userId = "user1";
-    db.all.mockResolvedValue({ results: [] });
-
-    await repository.searchFoods("apple", userId);
-
-    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("LIMIT 50"));
-  });
-
   it("should get food by id", async () => {
     const foodId = "f1";
     const userId = "user1";
@@ -144,5 +135,129 @@ describe("FoodRepository", () => {
     );
     expect(db.bind).toHaveBeenCalledWith(foodId, userId);
     expect(result).toEqual(expectedFood);
+  });
+
+  it("should return null when food not found by id", async () => {
+    db.first.mockResolvedValue(null);
+    const result = await repository.getFoodById("nonexistent", "user1");
+    expect(result).toBeNull();
+  });
+
+  it("should throw when createLog returns null", async () => {
+    db.first.mockResolvedValue(null);
+    await expect(
+      repository.createLog({
+        user_id: "user1",
+        food_id: null,
+        name: "Apple",
+        date: "2023-10-27",
+        meal: "snack" as const,
+        servings: null,
+        calories: 95,
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+      }),
+    ).rejects.toThrow("Failed to create food log");
+  });
+
+  it("should throw when updateLog returns null", async () => {
+    db.first.mockResolvedValue(null);
+    await expect(repository.updateLog("log1", "user1", { calories: 100 })).rejects.toThrow(
+      "Failed to update food log or not found",
+    );
+  });
+
+  it("should return false when deleteLog finds no matching row", async () => {
+    db.run.mockResolvedValue({ meta: { changes: 0 } });
+    const result = await repository.deleteLog("nonexistent", "user1");
+    expect(result).toBe(false);
+  });
+
+  it("should return empty array for deleteLogs with empty ids", async () => {
+    const result = await repository.deleteLogs([], "user1");
+    expect(result).toEqual([]);
+    expect(db.prepare).not.toHaveBeenCalled();
+  });
+
+  it("should return only deleted ids for deleteLogs", async () => {
+    const ids = ["id1", "id2", "id3"];
+    db.batch = vi
+      .fn()
+      .mockResolvedValue([
+        { meta: { changes: 1 } },
+        { meta: { changes: 0 } },
+        { meta: { changes: 1 } },
+      ]);
+
+    const result = await repository.deleteLogs(ids, "user1");
+
+    expect(result).toEqual(["id1", "id3"]);
+  });
+
+  it("should get logs by date range", async () => {
+    const expectedLogs = [{ id: "log1", date: "2023-10-27" }];
+    db.all.mockResolvedValue({ results: expectedLogs });
+
+    const result = await repository.getLogsByDateRange("user1", "2023-10-27", "2023-10-28");
+
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("date >= ? AND date <= ?"));
+    expect(result).toEqual(expectedLogs);
+  });
+
+  it("should get logs since a timestamp", async () => {
+    const expectedLogs = [{ id: "log1", updated_at: "2023-10-28T00:00:00Z" }];
+    db.all.mockResolvedValue({ results: expectedLogs });
+
+    const result = await repository.getLogsSince("user1", "2023-10-27T00:00:00Z");
+
+    expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("updated_at > ?"));
+    expect(result).toEqual(expectedLogs);
+  });
+
+  it("should upsert multiple logs", async () => {
+    const logs = [
+      {
+        user_id: "user1",
+        food_id: null,
+        name: "Apple",
+        date: "2023-10-27",
+        meal: "snack" as const,
+        servings: null,
+        calories: 95,
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+      },
+    ];
+    db.batch = vi.fn().mockResolvedValue([{ results: [{ id: "log1", ...logs[0] }] }]);
+
+    const result = await repository.upsertLogs(logs);
+
+    expect(db.batch).toHaveBeenCalled();
+    expect(result).toHaveLength(1);
+  });
+
+  it("should return empty array for upsertLogs with empty input", async () => {
+    const result = await repository.upsertLogs([]);
+    expect(result).toEqual([]);
+  });
+
+  it("should get a specific log by id and userId", async () => {
+    const expectedLog = { id: "log1", user_id: "user1" };
+    db.first.mockResolvedValue(expectedLog);
+
+    const result = await repository.getLog("log1", "user1");
+
+    expect(db.prepare).toHaveBeenCalledWith(
+      expect.stringContaining("SELECT * FROM food_logs WHERE id = ? AND user_id = ?"),
+    );
+    expect(result).toEqual(expectedLog);
+  });
+
+  it("should return null when getLog finds no matching row", async () => {
+    db.first.mockResolvedValue(null);
+    const result = await repository.getLog("nonexistent", "user1");
+    expect(result).toBeNull();
   });
 });

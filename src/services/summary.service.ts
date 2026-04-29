@@ -11,10 +11,12 @@ import {
 } from "../types/food";
 
 export class SummaryService {
-  constructor(
-    private foodRepository: FoodRepository,
-    private profileRepository: ProfileRepository,
-  ) {}
+  private foodRepository: FoodRepository;
+  private profileRepository: ProfileRepository;
+  constructor(foodRepository: FoodRepository, profileRepository: ProfileRepository) {
+    this.foodRepository = foodRepository;
+    this.profileRepository = profileRepository;
+  }
 
   private round(val: number): number {
     return Math.round(val * 10) / 10;

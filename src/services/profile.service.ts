@@ -4,7 +4,10 @@ import { SetupProfileRequest, ProfileResponse, UpdateGoalRequest } from "../type
 import { ValidationError } from "../types/errors";
 
 export class ProfileService {
-  constructor(private profileRepository: ProfileRepository) {}
+  private profileRepository: ProfileRepository;
+  constructor(profileRepository: ProfileRepository) {
+    this.profileRepository = profileRepository;
+  }
 
   async getProfile(userId: string): Promise<ProfileResponse> {
     let profile = await this.profileRepository.getProfile(userId);
