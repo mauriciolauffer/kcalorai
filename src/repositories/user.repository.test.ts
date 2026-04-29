@@ -51,4 +51,16 @@ describe("UserRepository", () => {
     expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining("WHERE id = ?"));
     expect(result?.id).toBe("1");
   });
+
+  it("should return null when findByEmail finds no user", async () => {
+    db.first.mockResolvedValue(null);
+    const result = await repository.findByEmail("notfound@example.com");
+    expect(result).toBeNull();
+  });
+
+  it("should return null when findById finds no user", async () => {
+    db.first.mockResolvedValue(null);
+    const result = await repository.findById("nonexistent");
+    expect(result).toBeNull();
+  });
 });

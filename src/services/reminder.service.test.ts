@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Temporal } from "temporal-polyfill";
 import { ReminderService } from "./reminder.service";
 import { AppError } from "../types/errors";
 
@@ -63,7 +64,6 @@ describe("ReminderService", () => {
       .fn()
       .mockResolvedValue([{ user_id: "u1", time: "08:00", timezone: "UTC" }]);
 
-    const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
     await service.triggerReminders(now);
 
@@ -77,7 +77,6 @@ describe("ReminderService", () => {
       .fn()
       .mockResolvedValue([{ user_id: "u1", time: "09:00", timezone: "UTC" }]);
 
-    const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
     await service.triggerReminders(now);
 
@@ -91,7 +90,6 @@ describe("ReminderService", () => {
       .fn()
       .mockResolvedValue([{ user_id: "u1", time: "08:00", timezone: "Bad/Timezone" }]);
 
-    const { Temporal } = await import("temporal-polyfill");
     const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
     await service.triggerReminders(now);
 
@@ -103,5 +101,34 @@ describe("ReminderService", () => {
     repository.upsertSettings.mockResolvedValue({ user_id: "user1", enabled: true });
     const result = await service.updateSettings("user1", true);
     expect(result.enabled).toBe(true);
+  });
+
+  it("should return existing settings without creating new ones when settings already exist", async () => {
+    const userId = "user1";
+    repository.getSettings.mockResolvedValue({ user_id: userId, enabled: true });
+    repository.getReminders.mockResolvedValue([{ id: "r1", time: "08:00" }]);
+
+    const result = await service.getReminderData(userId);
+
+    expect(repository.upsertSettings).not.toHaveBeenCalled();
+    expect(result.settings.enabled).toBe(true);
+    expect(result.reminders).toHaveLength(1);
+  });
+
+  it("should continue processing other reminders when one throws", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    repository.getAllEnabledReminders = vi.fn().mockResolvedValue([
+      { user_id: "u1", time: "08:00", timezone: "Bad/Timezone" },
+      { user_id: "u2", time: "08:00", timezone: "UTC" },
+    ]);
+
+    const now = Temporal.ZonedDateTime.from("2024-01-01T08:00:00[UTC]");
+    await service.triggerReminders(now);
+
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("u1"), expect.anything());
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("u2"));
+    logSpy.mockRestore();
+    errSpy.mockRestore();
   });
 });

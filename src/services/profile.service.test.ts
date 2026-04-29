@@ -41,7 +41,7 @@ describe("ProfileService", () => {
 
       const result = await profileService.setupProfile("user1", data);
 
-      expect(result.latest_goal?.effective_from).toBe(Temporal.Now.plainDateISO().toString());
+      expect(result.latest_goal?.effective_from).toBe(Temporal.Now.plainDateISO("UTC").toString());
       expect(result.latest_goal?.daily_calories).toBe(2759);
       // Macros: 30% Protein (207g), 30% Fat (92g), 40% Carbs (276g)
       // 2759 * 0.3 / 4 = 206.925 -> 207
@@ -76,6 +76,88 @@ describe("ProfileService", () => {
       // BMR = 10*70 + 6.25*175 - 5*30 + 5 = 700 + 1093.75 - 150 + 5 = 1648.75
       // TDEE = 1648.75 * 1.2 = 1978.5 -> gain +500 = 2478.5 -> round = 2479
       expect(result.latest_goal?.daily_calories).toBe(2479);
+    });
+
+    it("should subtract 500 kcal for lose_weight goal", async () => {
+      const data = {
+        age: 30,
+        height_cm: 175,
+        weight_kg: 70,
+        gender: "male" as const,
+        activity_level: "sedentary" as const,
+        goal: "lose_weight" as const,
+      };
+      profileRepository.upsertProfile.mockResolvedValue({
+        ...data,
+        user_id: "user1",
+        profile_completed: true,
+      });
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+
+      const result = await profileService.setupProfile("user1", data);
+
+      // BMR = 10*70 + 6.25*175 - 5*30 + 5 = 700 + 1093.75 - 150 + 5 = 1648.75
+      // TDEE = 1648.75 * 1.2 = 1978.5 -> lose -500 = 1478.5 -> round = 1479
+      expect(result.latest_goal?.daily_calories).toBe(1479);
+    });
+
+    it.each([
+      ["lightly_active", 1.375, "male"],
+      ["very_active", 1.725, "male"],
+      ["extra_active", 1.9, "female"],
+    ] as const)(
+      "should apply %s multiplier correctly",
+      async (activity_level, multiplier, gender) => {
+        const data = {
+          age: 25,
+          height_cm: 170,
+          weight_kg: 65,
+          gender,
+          activity_level,
+          goal: "maintain_weight" as const,
+        };
+        profileRepository.upsertProfile.mockResolvedValue({
+          ...data,
+          user_id: "user1",
+          profile_completed: true,
+        });
+        profileRepository.createGoal.mockImplementation((goal: any) =>
+          Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+        );
+
+        const result = await profileService.setupProfile("user1", data);
+
+        const genderOffset = gender === "male" ? 5 : -161;
+        const bmr = 10 * 65 + 6.25 * 170 - 5 * 25 + genderOffset;
+        const expected = Math.max(1200, Math.round(bmr * multiplier));
+        expect(result.latest_goal?.daily_calories).toBe(expected);
+      },
+    );
+
+    it("should fall back to sedentary multiplier for unknown activity_level", async () => {
+      const data = {
+        age: 30,
+        height_cm: 175,
+        weight_kg: 70,
+        gender: "male" as const,
+        activity_level: "unknown_level" as any,
+        goal: "maintain_weight" as const,
+      };
+      profileRepository.upsertProfile.mockResolvedValue({
+        ...data,
+        user_id: "user1",
+        profile_completed: true,
+      });
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+
+      const result = await profileService.setupProfile("user1", data);
+
+      // BMR = 10*70 + 6.25*175 - 5*30 + 5 = 1648.75, fallback multiplier = 1.2
+      expect(result.latest_goal?.daily_calories).toBe(1979);
     });
 
     it("should enforce minimum calories", async () => {
@@ -211,6 +293,66 @@ describe("ProfileService", () => {
         effective_from: Temporal.Now.plainDateISO("UTC").toString(),
       });
       expect(result.latest_goal?.protein_g).toBe(150);
+    });
+    it("should throw ValidationError when custom macros don't align with calories", async () => {
+      const data = {
+        daily_calories: 2000,
+        protein_g: 300, // 1200 kcal alone — way over 2000
+        fat_g: 100,
+        carbs_g: 100,
+      };
+      profileRepository.getLatestGoal.mockResolvedValue(null);
+
+      await expect(profileService.updateGoal("user1", data)).rejects.toThrow(
+        "do not align with daily calorie goal",
+      );
+    });
+
+    it("should use 0 as fallback when no latest goal exists for missing macros", async () => {
+      // protein=50g (200 kcal) + fat=50g (450 kcal) + carbs=350g (1400 kcal) = 2050, within 5% of 2000 (100 kcal tolerance)
+      const data = { daily_calories: 2000, protein_g: 50, fat_g: 50 };
+      profileRepository.getLatestGoal
+        .mockResolvedValueOnce(null) // first call in updateGoal — fill carbs_g from latest (null -> 0)
+        .mockResolvedValueOnce({
+          id: "goal1",
+          daily_calories: 2000,
+          protein_g: 50,
+          fat_g: 50,
+          carbs_g: 350,
+          effective_from: "2024-01-01",
+        }); // second call in getProfile
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+      profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
+
+      // Note: protein=50 (200) + fat=50 (450) + carbs=0 (0) = 650 kcal, which differs
+      // from 2000 by 1350 > 5% tolerance (100), so this should throw
+      await expect(profileService.updateGoal("user1", data)).rejects.toThrow(
+        "do not align with daily calorie goal",
+      );
+    });
+
+    it("should use provided effective_from date when specified", async () => {
+      const data = { daily_calories: 2000, effective_from: "2025-01-01" };
+      profileRepository.createGoal.mockImplementation((goal: any) =>
+        Promise.resolve({ ...goal, id: "goal1", created_at: "now" }),
+      );
+      profileRepository.getProfile.mockResolvedValue({ user_id: "user1" });
+      profileRepository.getLatestGoal.mockResolvedValue({
+        id: "goal1",
+        daily_calories: 2000,
+        protein_g: 150,
+        fat_g: 67,
+        carbs_g: 200,
+        effective_from: "2025-01-01",
+      });
+
+      await profileService.updateGoal("user1", data);
+
+      expect(profileRepository.createGoal).toHaveBeenCalledWith(
+        expect.objectContaining({ effective_from: "2025-01-01" }),
+      );
     });
   });
 });

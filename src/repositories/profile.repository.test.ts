@@ -89,4 +89,49 @@ describe("ProfileRepository", () => {
     const result = await repository.getGoalByDate("user1", "2024-01-01");
     expect(result).toBeNull();
   });
+
+  it("should use UTC as default timezone when not provided", async () => {
+    db.first.mockResolvedValue({ user_id: "user1", profile_completed: 0, timezone: "UTC" });
+    await repository.upsertProfile({ user_id: "user1" });
+    expect(db.bind).toHaveBeenCalledWith("user1", null, null, null, null, null, null, "UTC", null);
+  });
+
+  it("should pass null for profile_completed when undefined", async () => {
+    db.first.mockResolvedValue({ user_id: "user1", profile_completed: 0 });
+    await repository.upsertProfile({ user_id: "user1" });
+    const bindCall = db.bind.mock.calls[0];
+    expect(bindCall[8]).toBeNull();
+  });
+
+  it("should return a goal from getLatestGoal when it exists", async () => {
+    const goal = {
+      id: "goal1",
+      user_id: "user1",
+      daily_calories: 2000,
+      protein_g: 150,
+      fat_g: 67,
+      carbs_g: 200,
+      effective_from: "2024-01-01",
+      created_at: "now",
+    };
+    db.first.mockResolvedValue(goal);
+    const result = await repository.getLatestGoal("user1");
+    expect(result?.daily_calories).toBe(2000);
+  });
+
+  it("should return a goal from getGoalByDate when it exists", async () => {
+    const goal = {
+      id: "goal1",
+      user_id: "user1",
+      daily_calories: 1800,
+      protein_g: 135,
+      fat_g: 60,
+      carbs_g: 180,
+      effective_from: "2023-01-01",
+      created_at: "now",
+    };
+    db.first.mockResolvedValue(goal);
+    const result = await repository.getGoalByDate("user1", "2023-06-01");
+    expect(result?.daily_calories).toBe(1800);
+  });
 });

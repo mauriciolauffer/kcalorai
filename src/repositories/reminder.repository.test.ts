@@ -96,4 +96,35 @@ describe("ReminderRepository", () => {
       "Failed to add reminder",
     );
   });
+
+  it("should upsert settings with enabled=false", async () => {
+    const userId = "user1";
+    db.first.mockResolvedValue({ user_id: userId, enabled: 0 });
+
+    const result = await repository.upsertSettings(userId, false);
+
+    expect(result.enabled).toBe(false);
+    expect(db.bind).toHaveBeenCalledWith(userId, 0);
+  });
+
+  it("should return empty array when getReminders finds no results", async () => {
+    db.all.mockResolvedValue({ results: [] });
+    const result = await repository.getReminders("user1");
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty array when getAllEnabledReminders finds no results", async () => {
+    db.all.mockResolvedValue({ results: [] });
+    const result = await repository.getAllEnabledReminders();
+    expect(result).toEqual([]);
+  });
+
+  it("should convert enabled=0 to false in getSettings", async () => {
+    const userId = "user1";
+    db.first.mockResolvedValue({ user_id: userId, enabled: 0 });
+
+    const result = await repository.getSettings(userId);
+
+    expect(result?.enabled).toBe(false);
+  });
 });

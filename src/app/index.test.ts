@@ -71,4 +71,25 @@ describe("API Gateway", () => {
     const res = await app.request("/profile", {}, env);
     expect(res.status).toBe(401);
   });
+
+  it("onError returns 500 for generic Error", async () => {
+    const h = new Hono();
+    h.onError((err, c) => {
+      if (err instanceof AppError) {
+        return c.json({ error: err.message }, err.statusCode as any);
+      }
+      if (err instanceof HTTPException) {
+        return err.getResponse();
+      }
+      console.error(err);
+      return c.json({ error: "Internal Server Error" }, 500);
+    });
+    h.get("/crash", () => {
+      throw new Error("unexpected boom");
+    });
+    const res = await h.fetch(new Request("http://localhost/crash"));
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as any;
+    expect(body.error).toBe("Internal Server Error");
+  });
 });

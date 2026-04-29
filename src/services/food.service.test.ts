@@ -12,8 +12,11 @@ describe("FoodService", () => {
       createLog: vi.fn(),
       updateLog: vi.fn(),
       deleteLog: vi.fn(),
+      deleteLogs: vi.fn(),
       getLog: vi.fn(),
       getLogsByDate: vi.fn(),
+      getLogsSince: vi.fn(),
+      upsertLogs: vi.fn(),
       searchFoods: vi.fn(),
       getFoodById: vi.fn(),
     };
@@ -237,5 +240,143 @@ describe("FoodService", () => {
         meal: "snack" as const,
       } as any),
     ).rejects.toThrow(NotFoundError);
+  });
+
+  it("should get daily logs", async () => {
+    const logs = [{ id: "log1", name: "Apple" }];
+    repository.getLogsByDate.mockResolvedValue(logs);
+
+    const result = await service.getDailyLogs("user1", "2023-10-27");
+
+    expect(repository.getLogsByDate).toHaveBeenCalledWith("user1", "2023-10-27");
+    expect(result).toEqual(logs);
+  });
+
+  it("should get logs since a given timestamp", async () => {
+    const logs = [{ id: "log1", name: "Apple" }];
+    repository.getLogsSince.mockResolvedValue(logs);
+
+    const result = await service.getLogsSince("user1", "2023-10-27T00:00:00.000Z");
+
+    expect(repository.getLogsSince).toHaveBeenCalledWith("user1", "2023-10-27T00:00:00.000Z");
+    expect(result).toEqual(logs);
+  });
+
+  describe("sync", () => {
+    it("should upsert and delete logs", async () => {
+      const upsertData = [
+        { name: "Apple", calories: 95, date: "2023-10-27", meal: "snack" as const },
+      ];
+      const deleteIds = ["log-old"];
+      repository.upsertLogs.mockResolvedValue([{ id: "new-id", ...upsertData[0] }]);
+      repository.deleteLogs.mockResolvedValue(deleteIds);
+
+      const result = await service.sync("user1", { upserts: upsertData, deleted_ids: deleteIds });
+
+      expect(repository.upsertLogs).toHaveBeenCalled();
+      expect(repository.deleteLogs).toHaveBeenCalledWith(deleteIds, "user1");
+      expect(result.deleted_ids).toEqual(deleteIds);
+      expect(result.upserted).toHaveLength(1);
+    });
+
+    it("should handle empty upserts and deletes", async () => {
+      repository.upsertLogs.mockResolvedValue([]);
+      repository.deleteLogs.mockResolvedValue([]);
+
+      const result = await service.sync("user1", { upserts: [], deleted_ids: [] });
+
+      expect(result.upserted).toEqual([]);
+      expect(result.deleted_ids).toEqual([]);
+    });
+
+    it("should throw NotFoundError when syncing log with food_id that doesn't exist", async () => {
+      repository.getFoodById.mockResolvedValue(null);
+
+      await expect(
+        service.sync("user1", {
+          upserts: [{ food_id: "missing", date: "2023-10-27", meal: "snack" as const } as any],
+          deleted_ids: [],
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  it("should copy log to today when no date is provided", async () => {
+    const existingLog = {
+      id: "log1",
+      user_id: "user1",
+      name: "Apple",
+      calories: 95,
+      date: "2023-10-27",
+      meal: "snack",
+      protein_g: 0,
+      fat_g: 0,
+      carbs_g: 0,
+      servings: 1,
+      food_id: null,
+    };
+    repository.getLog.mockResolvedValue(existingLog);
+    repository.createLog.mockImplementation((data: any) =>
+      Promise.resolve({ id: "log2", ...data }),
+    );
+
+    const result = await service.copyLog("user1", "log1");
+
+    expect(repository.createLog).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Apple", calories: 95 }),
+    );
+    expect(result.id).toBe("log2");
+  });
+
+  it("should not rescale when food_id is set but servings unchanged on update", async () => {
+    const userId = "u1";
+    const logId = "l1";
+    const existingLog = { id: logId, user_id: userId, food_id: "f1", servings: 2, calories: 200 };
+
+    repository.getLog.mockResolvedValue(existingLog);
+    repository.updateLog.mockImplementation((_id: string, _uid: string, d: any) =>
+      Promise.resolve({ ...existingLog, ...d }),
+    );
+
+    await service.updateLog(userId, logId, { servings: 2, name: "Updated Name" });
+
+    expect(repository.getFoodById).not.toHaveBeenCalled();
+    expect(repository.updateLog).toHaveBeenCalledWith(
+      logId,
+      userId,
+      expect.objectContaining({ name: "Updated Name" }),
+    );
+  });
+
+  it("should not rescale when food_id is not set on update", async () => {
+    const userId = "u1";
+    const logId = "l1";
+    const existingLog = {
+      id: logId,
+      user_id: userId,
+      food_id: null,
+      servings: null,
+      calories: 300,
+    };
+
+    repository.getLog.mockResolvedValue(existingLog);
+    repository.updateLog.mockImplementation((_id: string, _uid: string, d: any) =>
+      Promise.resolve({ ...existingLog, ...d }),
+    );
+
+    await service.updateLog(userId, logId, { calories: 350 });
+
+    expect(repository.getFoodById).not.toHaveBeenCalled();
+  });
+
+  it("should log meal with default macros as 0 for manual entry with only calories", async () => {
+    const data = { name: "Mystery", calories: 300, date: "2023-10-27", meal: "dinner" as const };
+    repository.createLog.mockImplementation((d: any) => Promise.resolve({ id: "log1", ...d }));
+
+    const result = await service.logMeal("user1", data);
+
+    expect(result.protein_g).toBe(0);
+    expect(result.fat_g).toBe(0);
+    expect(result.carbs_g).toBe(0);
   });
 });
